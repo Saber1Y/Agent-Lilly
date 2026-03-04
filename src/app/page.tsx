@@ -1,33 +1,33 @@
-import Link from 'next/link';
-import { Navbar } from '@/components/Navbar';
-import { Button } from '@/components/Button';
-import { Card } from '@/components/Card';
-import { COLORS, CHAINS, FEATURES, STEPS } from '@/constants';
+import Link from "next/link";
+import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
+import { CHAINS, FEATURES, STEPS } from "@/constants";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0A0A0F]">
       <Navbar />
-      
+
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A24] border border-[#2A2A35] mb-8">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-[#fab6f5] animate-pulse"></span>
             <span className="text-sm text-[#A0A0B0]">Powered by LI.FI SDK</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
             <span className="gradient-text">Yield Rebalancing</span>
             <br />
             <span className="text-white">Agent</span>
           </h1>
-          
+
           <p className="text-xl text-[#A0A0B0] max-w-2xl mx-auto mb-10">
-            Autonomous AI agent that monitors USDC yields across 8+ chains 
-            and automatically rebalances via LI.FI for maximum returns.
+            Autonomous AI agent that monitors USDC yields across 8+ chains and
+            automatically rebalances via LI.FI for maximum returns.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/chat">
               <Button size="lg" className="glow-blue">
@@ -38,48 +38,50 @@ export default function Home() {
               View Documentation
             </Button>
           </div>
-          
+
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
             {[
-              { label: 'Supported Chains', value: '8+' },
-              { label: 'Total Volume', value: '$60B+' },
-              { label: 'Avg. Yield Difference', value: '~3%' },
-              { label: 'Protocols', value: 'Aave + Kamino' },
+              { label: "Supported Chains", value: "8+" },
+              { label: "Total Volume", value: "$60B+" },
+              { label: "Avg. Yield Difference", value: "~3%" },
+              { label: "Protocols", value: "Aave + Kamino" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-3xl font-bold gradient-text">{stat.value}</div>
+                <div className="text-3xl font-bold gradient-text">
+                  {stat.value}
+                </div>
                 <div className="text-sm text-[#606070]">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
-      
+
       {/* Features Section */}
       <section className="py-20 px-6 bg-[#12121A]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              How It Works
-            </h2>
+            <h2 className="text-4xl font-bold text-white mb-4">How It Works</h2>
             <p className="text-[#A0A0B0]">
               Intelligent yield optimization across the multi-chain ecosystem
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map((feature, index) => (
               <Card key={index} hover className="text-center">
                 <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {feature.title}
+                </h3>
                 <p className="text-sm text-[#A0A0B0]">{feature.description}</p>
               </Card>
             ))}
           </div>
         </div>
       </section>
-      
+
       {/* How It Works Steps */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
@@ -88,7 +90,7 @@ export default function Home() {
               Get Started in 3 Steps
             </h2>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             {STEPS.map((step, index) => (
               <div key={index} className="relative">
@@ -96,7 +98,9 @@ export default function Home() {
                   {step.number}
                 </div>
                 <div className="pt-8 pl-4">
-                  <h3 className="text-xl font-semibold text-white mb-2">{step.title}</h3>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {step.title}
+                  </h3>
                   <p className="text-[#A0A0B0]">{step.description}</p>
                 </div>
                 {index < STEPS.length - 1 && (
@@ -109,7 +113,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Supported Chains */}
       <section className="py-20 px-6 bg-[#12121A]">
         <div className="max-w-6xl mx-auto">
@@ -121,14 +125,14 @@ export default function Home() {
               Yield tracking across EVM and SVM chains
             </p>
           </div>
-          
+
           <div className="flex flex-wrap justify-center gap-4">
             {CHAINS.map((chain) => (
-              <div 
+              <div
                 key={chain.id}
                 className="flex items-center gap-3 px-5 py-3 rounded-full bg-[#1A1A24] border border-[#2A2A35] hover:border-[#3A3A48] transition-all"
               >
-                <div 
+                <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: chain.color }}
                 />
@@ -137,26 +141,41 @@ export default function Home() {
               </div>
             ))}
           </div>
-          
+
           <div className="text-center mt-12">
             <p className="text-[#A0A0B0] text-sm">
-              Bridging powered by{' '}
-              <a href="https://li.fi" target="_blank" rel="noopener noreferrer" className="text-[#5C67FF] hover:underline">
+              Bridging powered by{" "}
+              <a
+                href="https://li.fi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#5C67FF] hover:underline"
+              >
                 LI.FI
-              </a>
-              {' '}• Yields from{' '}
-              <a href="https://aavescan.com" target="_blank" rel="noopener noreferrer" className="text-[#F7C2FF] hover:underline">
+              </a>{" "}
+              • Yields from{" "}
+              <a
+                href="https://aavescan.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#F7C2FF] hover:underline"
+              >
                 AaveScan
-              </a>
-              {' '} &{' '}
-              <a href="https://kamino.finance" target="_blank" rel="noopener noreferrer" className="text-[#9945FF] hover:underline">
+              </a>{" "}
+              &{" "}
+              <a
+                href="https://kamino.finance"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9945FF] hover:underline"
+              >
                 Kamino
               </a>
             </p>
           </div>
         </div>
       </section>
-      
+
       {/* CTA Section */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
@@ -165,7 +184,8 @@ export default function Home() {
               Ready to Optimize Your Yields?
             </h2>
             <p className="text-[#A0A0B0] mb-8">
-              Launch the AI agent and let it find the best yield opportunities for you.
+              Launch the AI agent and let it find the best yield opportunities
+              for you.
             </p>
             <Link href="/chat">
               <Button size="lg" className="glow-pink">
@@ -175,7 +195,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-[#2A2A35]">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">

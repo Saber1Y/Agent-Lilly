@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --lifi-pink: #F7C2FF;
-  --lifi-blue: #5C67FF;
-  --bg-primary: #0A0A0F;
-  --bg-secondary: #12121A;
-  --bg-card: #1A1A24;
-  --text-primary: #FFFFFF;
-  --text-secondary: #A0A0B0;
+  --lifi-pink: #f7c2ff;
+  --lifi-blue: #5c67ff;
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #1a1a24;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b0;
   --text-muted: #606070;
-  --border-default: #2A2A35;
-  --border-hover: #3A3A48;
+  --border-default: #2a2a35;
+  --border-hover: #3a3a48;
 }
 
 @theme inline {
@@ -26,10 +26,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--lifi-pink), var(--lifi-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fab6f5;
 }
 
 .gradient-bg {
