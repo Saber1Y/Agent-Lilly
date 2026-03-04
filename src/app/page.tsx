@@ -3,6 +3,12 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { CHAINS, FEATURES, STEPS } from "@/constants";
+import { 
+  HiOutlineTrendingUp, 
+  HiOutlineSwitchHorizontal, 
+  HiOutlineSparkles, 
+  HiOutlineRefresh 
+} from "react-icons/hi";
 
 export default function Home() {
   return (
@@ -69,15 +75,26 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map((feature, index) => (
-              <Card key={index} hover className="text-center">
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-[#A0A0B0]">{feature.description}</p>
-              </Card>
-            ))}
+            {FEATURES.map((feature, index) => {
+              const IconComponent = {
+                'HiOutlineTrendingUp': HiOutlineTrendingUp,
+                'HiOutlineSwitchHorizontal': HiOutlineSwitchHorizontal,
+                'HiOutlineSparkles': HiOutlineSparkles,
+                'HiOutlineRefresh': HiOutlineRefresh,
+              }[feature.icon];
+              
+              return (
+                <Card key={index} hover className="text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#F7C2FF]/20 to-[#5C67FF]/20 mb-4">
+                    {IconComponent && <IconComponent className="w-8 h-8 text-[#F7C2FF]" />}
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-[#A0A0B0]">{feature.description}</p>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -35,22 +35,22 @@ export const CHAINS = [
 
 export const FEATURES = [
   {
-    icon: '💰',
+    icon: 'HiOutlineTrendingUp',
     title: 'Yield Monitor',
     description: 'Real-time APY tracking across 8+ chains via AaveScan & Kamino',
   },
   {
-    icon: '🌉',
+    icon: 'HiOutlineSwitchHorizontal',
     title: 'Cross-Chain Bridge',
     description: 'Seamless bridging powered by LI.FI SDK across 60+ chains',
   },
   {
-    icon: '🤖',
+    icon: 'HiOutlineSparkles',
     title: 'AI-Powered',
     description: 'Autonomous decision making to maximize your yields',
   },
   {
-    icon: '⚡',
+    icon: 'HiOutlineRefresh',
     title: 'Auto Rebalance',
     description: '24/7 automated portfolio rebalancing based on yield shifts',
   },
