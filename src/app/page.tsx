@@ -1,184 +1,195 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { YieldAgent, AgentDecision } from "@/lib/agent";
-
-const WALLET_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc9e7595f0fAb1";
+import Link from 'next/link';
+import { Navbar } from '@/components/Navbar';
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { COLORS, CHAINS, FEATURES, STEPS } from '@/constants';
 
 export default function Home() {
-  const [decision, setDecision] = useState<AgentDecision | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedChain, setSelectedChain] = useState(42161);
-
-  const agent = new YieldAgent(WALLET_ADDRESS, selectedChain);
-
-  useEffect(() => {
-    agent.setOnDecision((d) => {
-      setDecision(d);
-      setIsLoading(d.status === "analyzing");
-    });
-  }, []);
-
-  const runAnalysis = async () => {
-    setIsLoading(true);
-    agent.setCurrentChain(selectedChain);
-    await agent.analyze();
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-            LI.FI Yield Rebalancing Agent
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <Navbar />
+      
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1A1A24] border border-[#2A2A35] mb-8">
+            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse"></span>
+            <span className="text-sm text-[#A0A0B0]">Powered by LI.FI SDK</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+            <span className="gradient-text">Yield Rebalancing</span>
+            <br />
+            <span className="text-white">Agent</span>
           </h1>
-          <p className="text-slate-400">
-            Autonomous cross-chain yield optimization powered by AaveScan + Kamino (Solana) + LI.FI
+          
+          <p className="text-xl text-[#A0A0B0] max-w-2xl mx-auto mb-10">
+            Autonomous AI agent that monitors USDC yields across 8+ chains 
+            and automatically rebalances via LI.FI for maximum returns.
           </p>
-        </header>
-
-        <div className="grid gap-6">
-          <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-              Agent Configuration
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-400 text-sm">Current Chain</label>
-                <select
-                  value={selectedChain}
-                  onChange={(e) => setSelectedChain(Number(e.target.value))}
-                  className="w-full mt-1 p-3 bg-slate-900 rounded-lg border border-slate-700"
-                >
-                  <option value={42161}>Arbitrum</option>
-                  <option value={8453}>Base</option>
-                  <option value={10}>Optimism</option>
-                  <option value={1}>Ethereum</option>
-                  <option value={137}>Polygon</option>
-                  <option value={56}>BNB Chain</option>
-                  <option value={43114}>Avalanche</option>
-                  <option value={1151111081099710}>Solana</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-slate-400 text-sm">Wallet Address</label>
-                <div className="mt-1 p-3 bg-slate-900 rounded-lg font-mono text-sm truncate">
-                  {WALLET_ADDRESS}
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={runAnalysis}
-              disabled={isLoading}
-              className="mt-4 w-full py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 transition"
-            >
-              {isLoading ? "Analyzing Yields..." : "Run Agent Analysis"}
-            </button>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/chat">
+              <Button size="lg" className="glow-blue">
+                Try the Agent →
+              </Button>
+            </Link>
+            <Button variant="outline" size="lg">
+              View Documentation
+            </Button>
           </div>
-
-          {decision && (
-            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-                Agent Decision
-              </h2>
-              
-              <div className={`p-4 rounded-xl mb-4 ${
-                decision.recommendation.action === "REBALANCE" 
-                  ? "bg-green-500/20 border border-green-500/50" 
-                  : "bg-blue-500/20 border border-blue-500/50"
-              }`}>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className={`text-2xl ${
-                    decision.recommendation.action === "REBALANCE" ? "↔️" : "✅"
-                  }`}>
-                    {decision.recommendation.action === "REBALANCE" ? "↔️" : "✅"}
-                  </span>
-                  <span className="text-lg font-semibold">
-                    {decision.recommendation.action === "REBALANCE" ? "RECOMMENDATION: REBALANCE" : "HOLD"}
-                  </span>
-                </div>
-                <p className="text-slate-300">{decision.message}</p>
+          
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
+            {[
+              { label: 'Supported Chains', value: '8+' },
+              { label: 'Total Volume', value: '$60B+' },
+              { label: 'Avg. Yield Difference', value: '~3%' },
+              { label: 'Protocols', value: 'Aave + Kamino' },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-3xl font-bold gradient-text">{stat.value}</div>
+                <div className="text-sm text-[#606070]">{stat.label}</div>
               </div>
-
-              {decision.recommendation.action === "REBALANCE" && decision.recommendation.fromChain && decision.recommendation.toChain && (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-slate-900/50 p-4 rounded-xl">
-                    <div className="text-slate-400 text-sm">From</div>
-                    <div className="text-lg font-semibold">
-                      {decision.yields[decision.recommendation.fromChain]?.chainName || `Chain ${decision.recommendation.fromChain}`}
-                    </div>
-                    <div className="text-cyan-400">
-                      {decision.recommendation.fromYield?.toFixed(2)}% APY
-                    </div>
-                  </div>
-                  <div className="bg-slate-900/50 p-4 rounded-xl">
-                    <div className="text-slate-400 text-sm">To</div>
-                    <div className="text-lg font-semibold">
-                      {decision.yields[decision.recommendation.toChain]?.chainName || `Chain ${decision.recommendation.toChain}`}
-                    </div>
-                    <div className="text-green-400">
-                      {decision.recommendation.toYield?.toFixed(2)}% APY
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {decision.yields && Object.keys(decision.yields).length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-slate-400 text-sm mb-2">Yield Comparison</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {Object.values(decision.yields).map((y) => (
-                      <div 
-                        key={y.chainId} 
-                        className={`p-3 rounded-lg text-center ${
-                          y.chainId === selectedChain ? "bg-cyan-500/30 border border-cyan-500" : "bg-slate-900/50"
-                        }`}
-                      >
-                        <div className="text-xs text-slate-400">{y.chainName}</div>
-                        <div className="font-semibold">{y.supplyApr.toFixed(2)}%</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-              How It Works
-            </h2>
-            <div className="space-y-3 text-slate-300">
-              <div className="flex gap-3">
-                <span className="text-yellow-400 font-mono">01</span>
-                <span>Agent fetches live USDC yields from AaveScan API across multiple chains</span>
-              </div>
-              <div className="flex gap-3">
-                <span className="text-yellow-400 font-mono">02</span>
-                <span>Compares yields and finds the best opportunity</span>
-              </div>
-              <div className="flex gap-3">
-                <span className="text-yellow-400 font-mono">03</span>
-                <span>Uses LI.FI SDK to get cross-chain bridge quotes</span>
-              </div>
-              <div className="flex gap-3">
-                <span className="text-yellow-400 font-mono">04</span>
-                <span>Recommends rebalancing to higher yield chain</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center text-slate-500 text-sm">
-            Powered by{" "}
-            <a href="https://li.fi" className="text-cyan-400 hover:underline">LI.FI</a> +{" "}
-            <a href="https://aavescan.com" className="text-purple-400 hover:underline">AaveScan</a> +{" "}
-            <a href="https://kamino.finance" className="text-orange-400 hover:underline">Kamino</a>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
+      
+      {/* Features Section */}
+      <section className="py-20 px-6 bg-[#12121A]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              How It Works
+            </h2>
+            <p className="text-[#A0A0B0]">
+              Intelligent yield optimization across the multi-chain ecosystem
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {FEATURES.map((feature, index) => (
+              <Card key={index} hover className="text-center">
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+                <p className="text-sm text-[#A0A0B0]">{feature.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* How It Works Steps */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Get Started in 3 Steps
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {STEPS.map((step, index) => (
+              <div key={index} className="relative">
+                <div className="text-6xl font-bold text-[#1A1A24] absolute -top-4 -left-2">
+                  {step.number}
+                </div>
+                <div className="pt-8 pl-4">
+                  <h3 className="text-xl font-semibold text-white mb-2">{step.title}</h3>
+                  <p className="text-[#A0A0B0]">{step.description}</p>
+                </div>
+                {index < STEPS.length - 1 && (
+                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
+                    <span className="text-[#5C67FF] text-2xl">→</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      
+      {/* Supported Chains */}
+      <section className="py-20 px-6 bg-[#12121A]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Supported Chains
+            </h2>
+            <p className="text-[#A0A0B0]">
+              Yield tracking across EVM and SVM chains
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-4">
+            {CHAINS.map((chain) => (
+              <div 
+                key={chain.id}
+                className="flex items-center gap-3 px-5 py-3 rounded-full bg-[#1A1A24] border border-[#2A2A35] hover:border-[#3A3A48] transition-all"
+              >
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: chain.color }}
+                />
+                <span className="text-white font-medium">{chain.name}</span>
+                <span className="text-[#606070] text-sm">({chain.symbol})</span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-[#A0A0B0] text-sm">
+              Bridging powered by{' '}
+              <a href="https://li.fi" target="_blank" rel="noopener noreferrer" className="text-[#5C67FF] hover:underline">
+                LI.FI
+              </a>
+              {' '}• Yields from{' '}
+              <a href="https://aavescan.com" target="_blank" rel="noopener noreferrer" className="text-[#F7C2FF] hover:underline">
+                AaveScan
+              </a>
+              {' '} &{' '}
+              <a href="https://kamino.finance" target="_blank" rel="noopener noreferrer" className="text-[#9945FF] hover:underline">
+                Kamino
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+      
+      {/* CTA Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-gradient-to-br from-[#1A1A24] to-[#12121A] rounded-3xl p-12 border border-[#2A2A35]">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Ready to Optimize Your Yields?
+            </h2>
+            <p className="text-[#A0A0B0] mb-8">
+              Launch the AI agent and let it find the best yield opportunities for you.
+            </p>
+            <Link href="/chat">
+              <Button size="lg" className="glow-pink">
+                Launch Agent Now 🚀
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+      
+      {/* Footer */}
+      <footer className="py-8 px-6 border-t border-[#2A2A35]">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full gradient-bg flex items-center justify-center">
+              <span className="text-black font-bold text-sm">LF</span>
+            </div>
+            <span className="text-[#606070] text-sm">LI.FI Yield Agent</span>
+          </div>
+          <div className="text-[#606070] text-sm">
+            Built for LI.FI Vibeathon 2026
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
