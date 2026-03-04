@@ -17,36 +17,69 @@ const AAVE_CHAIN_IDS: { [key: string]: number } = {
   optimism: 10,
   avalanche: 43114,
   base: 8453,
-  BSC: 56,
-  Solana: 1151111081099710,
+  bsc: 56,
 };
 
-export async function fetchYields(): Promise<ChainYieldMap> {
+const SOLANA_CHAIN_ID = 1151111081099710;
+
+async function fetchSolanaYield(): Promise<YieldData | null> {
   try {
-    const response = await fetch('https://api.aavescan.com/v2/latest');
+    const response = await fetch('https://api.kamino.finance/v2/lending/markets');
     const data = await response.json();
     
-    const yields: ChainYieldMap = {};
-    
-    for (const [chainKey, chainId] of Object.entries(AAVE_CHAIN_IDS)) {
-      const marketData = data[chainKey];
-      if (marketData?.reserves?.USDC) {
-        const usdcData = marketData.reserves.USDC;
-        yields[chainId] = {
-          chainId,
-          chainName: chainKey.charAt(0).toUpperCase() + chainKey.slice(1),
-          symbol: 'USDC',
-          supplyApr: parseFloat(usdcData.supplyApr || '0') * 100,
-          liquidity: parseFloat(usdcData.totalLiquidityUSD || '0'),
-        };
+    const usdMarket = data.markets?.find((m: any) => m.symbol === 'USDC');
+    if (usdMarket) {
+      return {
+        chainId: SOLANA_CHAIN_ID,
+        chainName: 'Solana',
+        symbol: 'USDC',
+        supplyApr: parseFloat(usdMarket.supplyYield || '0') * 100,
+        liquidity: parseFloat(usdMarket.totalDepositsUsd || '0'),
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching Solana yield:', error);
+    return null;
+  }
+}
+
+export async function fetchYields(): Promise<ChainYieldMap> {
+  const yields: ChainYieldMap = {};
+  
+  try {
+    const response = await fetch('https://api.aavescan.com/v2/latest');
+    if (response.ok) {
+      const data = await response.json();
+      
+      for (const [chainKey, chainId] of Object.entries(AAVE_CHAIN_IDS)) {
+        const marketData = data[chainKey];
+        if (marketData?.reserves?.USDC) {
+          const usdcData = marketData.reserves.USDC;
+          yields[chainId] = {
+            chainId,
+            chainName: chainKey.charAt(0).toUpperCase() + chainKey.slice(1),
+            symbol: 'USDC',
+            supplyApr: parseFloat(usdcData.supplyApr || '0') * 100,
+            liquidity: parseFloat(usdcData.totalLiquidityUSD || '0'),
+          };
+        }
       }
     }
-    
-    return yields;
   } catch (error) {
-    console.error('Error fetching yields:', error);
-    return {};
+    console.error('Error fetching Aave yields:', error);
   }
+  
+  try {
+    const solanaYield = await fetchSolanaYield();
+    if (solanaYield) {
+      yields[SOLANA_CHAIN_ID] = solanaYield;
+    }
+  } catch (error) {
+    console.error('Error fetching Solana yield:', error);
+  }
+  
+  return yields;
 }
 
 export function findBestYield(yields: ChainYieldMap, currentChainId: number): {

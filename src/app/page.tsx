@@ -33,7 +33,7 @@ export default function Home() {
             LI.FI Yield Rebalancing Agent
           </h1>
           <p className="text-slate-400">
-            Autonomous cross-chain yield optimization powered by AaveScan + LI.FI
+            Autonomous cross-chain yield optimization powered by AaveScan + Kamino (Solana) + LI.FI
           </p>
         </header>
 
@@ -56,6 +56,9 @@ export default function Home() {
                   <option value={10}>Optimism</option>
                   <option value={1}>Ethereum</option>
                   <option value={137}>Polygon</option>
+                  <option value={56}>BNB Chain</option>
+                  <option value={43114}>Avalanche</option>
+                  <option value={1151111081099710}>Solana</option>
                 </select>
               </div>
               <div>
@@ -171,7 +174,8 @@ export default function Home() {
           <div className="text-center text-slate-500 text-sm">
             Powered by{" "}
             <a href="https://li.fi" className="text-cyan-400 hover:underline">LI.FI</a> +{" "}
-            <a href="https://aavescan.com" className="text-purple-400 hover:underline">AaveScan</a>
+            <a href="https://aavescan.com" className="text-purple-400 hover:underline">AaveScan</a> +{" "}
+            <a href="https://kamino.finance" className="text-orange-400 hover:underline">Kamino</a>
           </div>
         </div>
       </div>

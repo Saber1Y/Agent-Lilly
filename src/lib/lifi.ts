@@ -6,6 +6,9 @@ export const USDC_ADDRESSES: { [chainId: number]: string } = {
   10: '0x0b2C639c533813f4Aa9D7837CAf62653d997Ff932',
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+  56: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
+  43114: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
+  1151111081099710: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // Solana USDC
 };
 
 let cachedChains: any[] | null = null;
@@ -100,6 +103,7 @@ const CHAIN_NAMES_FALLBACK: { [id: number]: string } = {
   137: 'Polygon',
   56: 'BNB Chain',
   43114: 'Avalanche C-Chain',
+  1151111081099710: 'Solana',
 };
 
 let chainNamesCache: { [id: number]: string } = {};
