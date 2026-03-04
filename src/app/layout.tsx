@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora } from "next/font/google";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const sora = Sora({
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${sora.variable} font-sora antialiased`}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

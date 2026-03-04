@@ -2,7 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { COLORS, CHAINS } from '@/constants';
+import dynamic from 'next/dynamic';
+
+const ConnectWallet = dynamic(() => import('@/components/ConnectWallet').then(m => ({ default: m.ConnectWallet })), {
+  ssr: false,
+  loading: () => <div className="w-28 h-9 rounded-full bg-[#1A1A24] animate-pulse" />
+});
 
 interface Message {
   id: string;
@@ -10,8 +15,6 @@ interface Message {
   content: string;
   timestamp: number;
 }
-
-const WALLET_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc9e7595f0fAb1";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -152,9 +155,7 @@ What would you like to do?`,
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-xs text-[#606070] font-mono hidden sm:block">
-              {WALLET_ADDRESS.slice(0, 6)}...{WALLET_ADDRESS.slice(-4)}
-            </div>
+            <ConnectWallet />
             <Link 
               href="/" 
               className="text-sm text-[#A0A0B0] hover:text-white transition-colors"
