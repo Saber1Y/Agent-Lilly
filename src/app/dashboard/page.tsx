@@ -9,7 +9,7 @@ import {
   SectionCard,
   StatusPill,
 } from "@/components/dashboard/ui";
-import { useAgentOps } from "@/components/dashboard/useAgentOps";
+import { useDashboardFeed } from "@/components/dashboard/useDashboardFeed";
 
 const PAGES = [
   {
@@ -18,19 +18,9 @@ const PAGES = [
     description: "Review Lily's dry-run opportunities before you act.",
   },
   {
-    href: "/dashboard/policies",
-    title: "Risk Policies",
-    description: "Tune minimum gain, max route cost, cooldowns, and chain filters.",
-  },
-  {
     href: "/dashboard/reports",
     title: "Weekly Reports",
     description: "Summaries, recent run history, and judge-friendly performance context.",
-  },
-  {
-    href: "/dashboard/telegram",
-    title: "Telegram Deploy",
-    description: "Attach a bot token and chat id so Lily can send live operator alerts.",
   },
   {
     href: "/dashboard/chat",
@@ -40,22 +30,17 @@ const PAGES = [
 ];
 
 export default function DashboardOverviewPage() {
-  const { report, runs, isLoading, refresh, runLilyNow } = useAgentOps();
+  const { report, runs, isLoading, refresh } = useDashboardFeed();
 
   return (
     <DashboardShell
       currentPage="dashboard"
       title="Agent Lily Dashboard"
-      subtitle="A modular control room for approvals, policies, reports, Telegram deployment, and chat."
+      subtitle="A modular control room for approvals, reports, and chat."
       actions={
-        <>
-          <ActionButton onClick={() => refresh()} disabled={isLoading} variant="secondary">
-            Refresh
-          </ActionButton>
-          <ActionButton onClick={runLilyNow} disabled={isLoading}>
-            Run Lily Now
-          </ActionButton>
-        </>
+        <ActionButton onClick={() => refresh()} disabled={isLoading} variant="secondary">
+          Refresh
+        </ActionButton>
       }
     >
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -117,8 +102,8 @@ export default function DashboardOverviewPage() {
             </div>
             <div className="rounded-[24px] border border-[#262633] bg-[#101018] p-5 text-sm leading-6 text-[#8F90A6]">
               Agent Lily now operates through dedicated workspaces for approvals,
-              policies, reports, Telegram deployment, and chat. That reads like
-              a product, not a single hackathon screen.
+              reports, and chat. Admin controls stay outside the normal user
+              path, so this reads like a product instead of an internal panel.
             </div>
           </div>
         </SectionCard>

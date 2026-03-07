@@ -11,7 +11,12 @@ import { privateKeyToAccount } from "viem/accounts";
 
 import { YieldAgent, type AgentDecision } from "./agent";
 import { getChainConfig } from "./evmChains";
-import { DEFAULT_FROM_ADDRESS, USDC_ADDRESSES, toUsdcBaseUnits } from "./lifi";
+import {
+  DEFAULT_FROM_ADDRESS,
+  USDC_ADDRESSES,
+  getChainName,
+  toUsdcBaseUnits,
+} from "./lifi";
 import {
   getLastExecutionTimestamp,
   getRecentAutomationRuns,
@@ -123,6 +128,7 @@ export async function runAutonomousRebalance(
   const recommendation = decision.recommendation;
 
   if (!autoExecute || !privateKey) {
+    const reviewCommand = await getReviewCommand(recommendation, amountUsdc);
     const result: AutomationResult = {
       status: "dry_run",
       mode: "analysis",
@@ -141,6 +147,7 @@ export async function runAutonomousRebalance(
         projectedAnnualGainUsd: decision.analysis?.projectedAnnualGainUsd,
         projectedNetAnnualGainUsd: decision.analysis?.projectedNetAnnualGainUsd,
         paybackDays: decision.analysis?.paybackDays,
+        reviewCommand,
       },
     };
     await persistAutomationRun({ triggerSource, result });
@@ -238,6 +245,18 @@ async function executeServerRoute(
   return executeRoute(route, {
     executeInBackground: false,
   });
+}
+
+async function getReviewCommand(
+  recommendation: NonNullable<AgentDecision["recommendation"]>,
+  amountUsdc: string,
+) {
+  if (!recommendation.fromChain) {
+    return undefined;
+  }
+
+  const fromChainName = await getChainName(recommendation.fromChain);
+  return `rebalance ${amountUsdc} from ${fromChainName.toLowerCase()}`;
 }
 
 function createServerWalletClient(

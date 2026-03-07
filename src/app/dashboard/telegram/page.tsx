@@ -9,7 +9,14 @@ import {
 import { useAgentOps } from "@/components/dashboard/useAgentOps";
 
 export default function DashboardTelegramPage() {
-  const { opsConfig, setOpsConfig, saveConfig, isLoading } = useAgentOps();
+  const {
+    opsSecret,
+    setOpsSecret,
+    opsConfig,
+    setOpsConfig,
+    saveConfig,
+    isLoading,
+  } = useAgentOps();
 
   return (
     <DashboardShell
@@ -26,7 +33,19 @@ export default function DashboardTelegramPage() {
         title="Telegram Deployment"
         subtitle="Give Lily a bot identity so she can operate where the user already lives."
       >
+        <p className="mb-4 rounded-2xl border border-[#2B2B39] bg-[#101018] px-4 py-3 text-sm text-[#A0A0B0]">
+          Admin-only setup. Telegram credentials are encrypted on the server before they are persisted.
+        </p>
         <div className="grid gap-4 md:grid-cols-2">
+          <TextField
+            label="Agent Admin Token"
+            type="password"
+            value={opsSecret}
+            onChange={setOpsSecret}
+            placeholder="AGENT_API_SECRET or CRON_SECRET"
+          />
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <TextField
             label="Telegram Bot Token"
             type="password"

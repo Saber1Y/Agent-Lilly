@@ -61,13 +61,6 @@ export function useAgentOps() {
   const [report, setReport] = useState<AgentReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const savedSecret = window.localStorage.getItem("agent-ops-secret");
-    if (savedSecret) {
-      setOpsSecret(savedSecret);
-    }
-  }, []);
-
   const refresh = useCallback(
     async (secret = opsSecret) => {
       if (!secret.trim()) {
@@ -120,7 +113,6 @@ export function useAgentOps() {
       return;
     }
 
-    window.localStorage.setItem("agent-ops-secret", opsSecret);
     void refresh(opsSecret);
   }, [opsSecret, refresh]);
 

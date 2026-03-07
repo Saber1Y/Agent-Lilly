@@ -1,4 +1,5 @@
 import type { AutomationResult } from "./automation";
+import { decryptConfigValue, encryptConfigValue } from "./configCrypto";
 import { getSupabaseAdminClient } from "./supabaseAdmin";
 
 export interface StoredAgentConfig {
@@ -90,7 +91,12 @@ export async function getStoredAgentConfig(): Promise<StoredAgentConfig | null> 
     return null;
   }
 
-  return mapAgentConfigRow(data);
+  try {
+    return mapAgentConfigRow(data);
+  } catch (error) {
+    console.error("Failed to decode stored agent config", error);
+    return null;
+  }
 }
 
 export async function saveAgentConfig(
@@ -101,22 +107,28 @@ export async function saveAgentConfig(
     return null;
   }
 
-  const row: AgentConfigRow = {
-    id: config.id,
-    current_chain_id: config.currentChainId,
-    position_usdc: config.positionUsdc,
-    auto_rebalance_enabled: config.autoRebalanceEnabled,
-    min_yield_delta_pct: config.minYieldDeltaPct ?? null,
-    min_net_gain_usd: config.minNetGainUsd ?? null,
-    max_route_cost_usd: config.maxRouteCostUsd ?? null,
-    cooldown_minutes: config.cooldownMinutes ?? null,
-    allowed_destination_chain_ids: config.allowedDestinationChainIds ?? null,
-    blocked_chain_ids: config.blockedChainIds ?? null,
-    alert_webhook_url: config.alertWebhookUrl ?? null,
-    telegram_bot_token: config.telegramBotToken ?? null,
-    telegram_chat_id: config.telegramChatId ?? null,
-    telegram_enabled: config.telegramEnabled ?? null,
-  };
+  let row: AgentConfigRow;
+  try {
+    row = {
+      id: config.id,
+      current_chain_id: config.currentChainId,
+      position_usdc: config.positionUsdc,
+      auto_rebalance_enabled: config.autoRebalanceEnabled,
+      min_yield_delta_pct: config.minYieldDeltaPct ?? null,
+      min_net_gain_usd: config.minNetGainUsd ?? null,
+      max_route_cost_usd: config.maxRouteCostUsd ?? null,
+      cooldown_minutes: config.cooldownMinutes ?? null,
+      allowed_destination_chain_ids: config.allowedDestinationChainIds ?? null,
+      blocked_chain_ids: config.blockedChainIds ?? null,
+      alert_webhook_url: config.alertWebhookUrl ?? null,
+      telegram_bot_token: encryptConfigValue(config.telegramBotToken ?? null),
+      telegram_chat_id: encryptConfigValue(config.telegramChatId ?? null),
+      telegram_enabled: config.telegramEnabled ?? null,
+    };
+  } catch (error) {
+    console.error("Failed to encrypt agent config", error);
+    return null;
+  }
 
   const { data, error } = await supabase
     .from("agent_configs")
@@ -131,7 +143,12 @@ export async function saveAgentConfig(
     return null;
   }
 
-  return mapAgentConfigRow(data);
+  try {
+    return mapAgentConfigRow(data);
+  } catch (error) {
+    console.error("Failed to decode saved agent config", error);
+    return null;
+  }
 }
 
 export async function persistAutomationRun(params: {
@@ -208,8 +225,8 @@ function mapAgentConfigRow(row: AgentConfigRow): StoredAgentConfig {
     allowedDestinationChainIds: row.allowed_destination_chain_ids ?? null,
     blockedChainIds: row.blocked_chain_ids ?? null,
     alertWebhookUrl: row.alert_webhook_url ?? null,
-    telegramBotToken: row.telegram_bot_token ?? null,
-    telegramChatId: row.telegram_chat_id ?? null,
+    telegramBotToken: decryptConfigValue(row.telegram_bot_token ?? null),
+    telegramChatId: decryptConfigValue(row.telegram_chat_id ?? null),
     telegramEnabled: row.telegram_enabled ?? null,
     updatedAt: row.updated_at ?? null,
   };

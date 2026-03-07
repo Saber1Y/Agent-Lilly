@@ -14,7 +14,6 @@ export async function sendTelegramMessage(params: {
       body: JSON.stringify({
         chat_id: params.chatId,
         text: params.text,
-        parse_mode: "Markdown",
         disable_web_page_preview: true,
       }),
     },
@@ -34,7 +33,7 @@ export function formatAutomationTelegramMessage(params: {
   routeId?: string;
 }) {
   return [
-    "*Agent Lily Update*",
+    "Agent Lily Update",
     "",
     `Source: ${params.source}`,
     `Status: ${params.status}`,
@@ -42,7 +41,7 @@ export function formatAutomationTelegramMessage(params: {
     `Chain: ${params.currentChainId}`,
     "",
     params.message,
-    params.routeId ? `Route ID: \`${params.routeId}\`` : null,
+    params.routeId ? `Route ID: ${params.routeId}` : null,
   ]
     .filter(Boolean)
     .join("\n");

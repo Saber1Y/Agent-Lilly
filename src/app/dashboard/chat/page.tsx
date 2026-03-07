@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { DashboardShell } from "@/components/DashboardShell";
@@ -72,7 +73,8 @@ function createTimestamp() {
   return Date.now();
 }
 
-export default function DashboardChatPage() {
+function DashboardChatContent() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -82,9 +84,11 @@ export default function DashboardChatPage() {
   const endRef = useRef<HTMLDivElement>(null);
 
   const dynamicEnvironmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID;
-  const isSlashMode = input.trimStart().startsWith("/");
+  const prefilledCommand = searchParams.get("command") ?? "";
+  const currentInput = input || prefilledCommand;
+  const isSlashMode = currentInput.trimStart().startsWith("/");
   const slashMatches = SLASH_COMMANDS.filter((item) =>
-    item.command.startsWith(input.trim().toLowerCase() || "/"),
+    item.command.startsWith(currentInput.trim().toLowerCase() || "/"),
   );
   const canExecute = canExecuteWithWallet(wallet);
 
@@ -296,12 +300,12 @@ export default function DashboardChatPage() {
             <div className="flex items-center gap-3 rounded-[24px] border border-[#2A2A35] bg-[#15151E] px-4 py-3">
               <input
                 type="text"
-                value={input}
+                value={currentInput}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    const resolvedInput = resolveSlashCommand(input);
+                    const resolvedInput = resolveSlashCommand(currentInput);
                     void sendCommand(
                       resolvedInput.commandValue,
                       resolvedInput.displayValue,
@@ -314,13 +318,13 @@ export default function DashboardChatPage() {
               />
               <ActionButton
                 onClick={() => {
-                  const resolvedInput = resolveSlashCommand(input);
+                  const resolvedInput = resolveSlashCommand(currentInput);
                   void sendCommand(
                     resolvedInput.commandValue,
                     resolvedInput.displayValue,
                   );
                 }}
-                disabled={!input.trim() || isLoading}
+                disabled={!currentInput.trim() || isLoading}
               >
                 Send
               </ActionButton>
@@ -329,6 +333,14 @@ export default function DashboardChatPage() {
         </div>
       </div>
     </DashboardShell>
+  );
+}
+
+export default function DashboardChatPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[72vh] rounded-[30px] border border-[#262633] bg-[#15151E]" />}>
+      <DashboardChatContent />
+    </Suspense>
   );
 }
 

@@ -8,9 +8,7 @@ import {
   HiOutlineChartBar,
   HiOutlineChatAlt2,
   HiOutlineClipboardList,
-  HiOutlineAdjustments,
   HiOutlineDocumentReport,
-  HiOutlinePaperAirplane,
 } from 'react-icons/hi';
 
 interface ChatHistory {
@@ -117,17 +115,6 @@ export function Sidebar({
               Approvals
             </Link>
             <Link
-              href="/dashboard/policies"
-              className={`mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                currentPage === 'policies'
-                  ? 'bg-[#1A1A24] text-white'
-                  : 'text-[#A0A0B0] hover:bg-[#1A1A24] hover:text-white'
-              }`}
-            >
-              <HiOutlineAdjustments className="h-5 w-5" />
-              Policies
-            </Link>
-            <Link
               href="/dashboard/reports"
               className={`mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
                 currentPage === 'reports'
@@ -137,17 +124,6 @@ export function Sidebar({
             >
               <HiOutlineDocumentReport className="h-5 w-5" />
               Reports
-            </Link>
-            <Link
-              href="/dashboard/telegram"
-              className={`mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                currentPage === 'telegram'
-                  ? 'bg-[#1A1A24] text-white'
-                  : 'text-[#A0A0B0] hover:bg-[#1A1A24] hover:text-white'
-              }`}
-            >
-              <HiOutlinePaperAirplane className="h-5 w-5" />
-              Telegram
             </Link>
             <Link
               href="/dashboard/chat"
@@ -228,7 +204,7 @@ export function Sidebar({
                 Workspace
               </div>
               <p className="mt-3 text-sm leading-6 text-[#A0A0B0]">
-                Modular control room for automation, approvals, Telegram deployment, reports, and chat.
+                Modular control room for automation insights, approvals, reports, and chat.
               </p>
             </div>
           )}

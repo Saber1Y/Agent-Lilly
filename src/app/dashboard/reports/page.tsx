@@ -2,10 +2,10 @@
 
 import { DashboardShell } from "@/components/DashboardShell";
 import { ActionButton, MetricTile, SectionCard, StatusPill } from "@/components/dashboard/ui";
-import { useAgentOps } from "@/components/dashboard/useAgentOps";
+import { useDashboardFeed } from "@/components/dashboard/useDashboardFeed";
 
 export default function DashboardReportsPage() {
-  const { report, runs, isLoading, refresh } = useAgentOps();
+  const { report, runs, isLoading, refresh } = useDashboardFeed();
 
   return (
     <DashboardShell

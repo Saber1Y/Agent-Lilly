@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { DashboardShell } from "@/components/DashboardShell";
 import {
   ActionButton,
@@ -7,10 +9,10 @@ import {
   SectionCard,
   StatusPill,
 } from "@/components/dashboard/ui";
-import { useAgentOps } from "@/components/dashboard/useAgentOps";
+import { useDashboardFeed } from "@/components/dashboard/useDashboardFeed";
 
 export default function DashboardApprovalsPage() {
-  const { runs, isLoading, refresh, runLilyNow } = useAgentOps();
+  const { runs, isLoading, refresh } = useDashboardFeed();
   const approvalItems = runs.filter((run) => run.status === "dry_run");
 
   return (
@@ -19,14 +21,9 @@ export default function DashboardApprovalsPage() {
       title="Approval Inbox"
       subtitle="Review Lily's latest dry-run recommendations before you trigger a real move."
       actions={
-        <>
-          <ActionButton onClick={() => refresh()} disabled={isLoading} variant="secondary">
-            Refresh
-          </ActionButton>
-          <ActionButton onClick={runLilyNow} disabled={isLoading}>
-            Approve Latest Run
-          </ActionButton>
-        </>
+        <ActionButton onClick={() => refresh()} disabled={isLoading} variant="secondary">
+          Refresh
+        </ActionButton>
       }
     >
       <SectionCard
@@ -47,9 +44,17 @@ export default function DashboardApprovalsPage() {
                     {new Date(run.createdAt).toLocaleString()} • {run.triggerSource}
                   </div>
                 </div>
-                <StatusPill tone="accent">
-                  Needs review
-                </StatusPill>
+                <div className="flex items-center gap-3">
+                  <StatusPill tone="accent">Needs review</StatusPill>
+                  {typeof run.details?.reviewCommand === "string" ? (
+                    <Link
+                      href={`/dashboard/chat?command=${encodeURIComponent(run.details.reviewCommand)}`}
+                      className="rounded-xl bg-[#fab6f5] px-3 py-2 text-sm font-semibold text-black"
+                    >
+                      Review in Chat
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </div>
           ))
