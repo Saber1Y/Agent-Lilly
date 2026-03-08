@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -9,6 +9,13 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { ActionButton, StatusPill } from "@/components/dashboard/ui";
 import { WalletAddressSync } from "@/components/WalletAddressSync";
 import { getChatResponse } from "@/lib/chat";
+import {
+  deleteChat,
+  generateChatTitle,
+  getStoredChats,
+  saveChat,
+  type ChatMessage,
+} from "@/lib/chatStorage";
 import {
   canExecuteWithWallet,
   executeFromInput,
@@ -28,12 +35,12 @@ const ConnectWallet = dynamic(
   },
 );
 
-interface Message {
+interface Message extends ChatMessage {}
+
+interface ChatHistory {
   id: string;
-  role: "user" | "assistant";
-  content: string;
+  title: string;
   timestamp: number;
-  actionCommand?: string;
 }
 
 interface SlashCommand {
@@ -81,6 +88,8 @@ function DashboardChatContent() {
   const [loadingLabel, setLoadingLabel] = useState("Thinking...");
   const [walletAddress, setWalletAddress] = useState<string | undefined>();
   const [wallet, setWallet] = useState<ExecutableWallet | null>(null);
+  const [chats, setChats] = useState<ChatHistory[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const dynamicEnvironmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID;
@@ -93,8 +102,35 @@ function DashboardChatContent() {
   const canExecute = canExecuteWithWallet(wallet);
 
   useEffect(() => {
+    setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
+  }, []);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleNewChat = useCallback(() => {
+    setMessages(INITIAL_MESSAGES);
+    setActiveChatId(null);
+  }, []);
+
+  const handleSelectChat = useCallback((chatId: string) => {
+    const stored = getStoredChats();
+    const chat = stored.find((c) => c.id === chatId);
+    if (chat) {
+      setMessages(chat.messages);
+      setActiveChatId(chatId);
+    }
+  }, []);
+
+  const handleDeleteChat = useCallback((chatId: string) => {
+    deleteChat(chatId);
+    setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
+    if (activeChatId === chatId) {
+      setMessages(INITIAL_MESSAGES);
+      setActiveChatId(null);
+    }
+  }, [activeChatId]);
 
   const sendCommand = async (commandValue: string, displayValue: string) => {
     if (!commandValue.trim() || isLoading) {
@@ -137,18 +173,26 @@ function DashboardChatContent() {
       });
     }
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: response,
-        timestamp: createTimestamp(),
-        actionCommand,
-      },
-    ]);
+    const assistantMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: response,
+      timestamp: createTimestamp(),
+      actionCommand,
+    };
+    setMessages((prev) => [...prev, userMessage, assistantMessage]);
     setIsLoading(false);
     setLoadingLabel("Thinking...");
+
+    const updatedMessages: Message[] = [...messages, userMessage, assistantMessage];
+    const firstUserMsg = messages.find((m) => m.role === "user")?.content || "";
+    const title = activeChatId
+      ? chats.find((c) => c.id === activeChatId)?.title || "New Chat"
+      : generateChatTitle(firstUserMsg || displayValue);
+    const chatId = activeChatId || crypto.randomUUID();
+    saveChat({ id: chatId, title, messages: updatedMessages, timestamp: Date.now() });
+    setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
+    setActiveChatId(chatId);
   };
 
   return (
@@ -157,6 +201,12 @@ function DashboardChatContent() {
       title="Agent Lily Chat"
       subtitle="Conversational workspace for quotes, analysis, and execution."
       actions={<ConnectWallet />}
+      chats={chats}
+      activeChat={activeChatId}
+      onNewChat={handleNewChat}
+      onSelectChat={handleSelectChat}
+      onDeleteChat={handleDeleteChat}
+      showChatHistory={true}
     >
       {dynamicEnvironmentId ? (
         <WalletAddressSync
@@ -312,7 +362,7 @@ function DashboardChatContent() {
                     );
                   }
                 }}
-                placeholder="Ask Lily or type / for commands"
+                placeholder={walletAddress ? "Ask Lily or type / for commands" : "Connect wallet to start chatting"}
                 className="flex-1 bg-transparent text-white placeholder-[#606070] outline-none"
                 disabled={isLoading}
               />
@@ -324,7 +374,7 @@ function DashboardChatContent() {
                     resolvedInput.displayValue,
                   );
                 }}
-                disabled={!currentInput.trim() || isLoading}
+                disabled={!currentInput.trim() || isLoading || !walletAddress}
               >
                 Send
               </ActionButton>

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import {
   HiOutlineTrash,
-  HiOutlineMenu,
   HiOutlineX,
   HiOutlineChartBar,
   HiOutlineChatAlt2,
@@ -11,7 +10,7 @@ import {
   HiOutlineDocumentReport,
 } from 'react-icons/hi';
 
-interface ChatHistory {
+export interface ChatHistory {
   id: string;
   title: string;
   timestamp: number;
@@ -48,16 +47,6 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <>
-      {/* Toggle Button (when sidebar is closed) */}
-      {!isOpen && (
-        <button
-          onClick={onToggle}
-          className="fixed left-4 top-4 z-50 rounded-xl border border-[#2B2B39] bg-[#14141C] p-2 text-white transition-colors hover:border-[#fab6f5]/40"
-        >
-          <HiOutlineMenu className="w-5 h-5" />
-        </button>
-      )}
-
       {/* Sidebar */}
       <aside 
         className={`fixed inset-y-0 left-0 lg:relative z-40 flex h-[100dvh] min-h-0 w-72 max-w-[85vw] flex-col border-r border-[#232330] bg-[linear-gradient(180deg,#0D0D12,#0A0A0F)] transition-transform duration-300 ${

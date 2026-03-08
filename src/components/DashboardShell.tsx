@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { HiOutlineMenu } from "react-icons/hi";
 
-import { Sidebar } from "./Sidebar";
+import { Sidebar, type ChatHistory } from "./Sidebar";
 
 export function DashboardShell(props: {
   currentPage:
@@ -17,6 +17,12 @@ export function DashboardShell(props: {
   subtitle: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
+  chats?: ChatHistory[];
+  activeChat?: string | null;
+  onNewChat?: () => void;
+  onSelectChat?: (id: string) => void;
+  onDeleteChat?: (id: string) => void;
+  showChatHistory?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -28,13 +34,18 @@ export function DashboardShell(props: {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         currentPage={props.currentPage}
-        showChatHistory={false}
+        showChatHistory={props.showChatHistory ?? false}
+        chats={props.chats}
+        activeChat={props.activeChat ?? undefined}
+        onNewChat={props.onNewChat}
+        onSelectChat={props.onSelectChat}
+        onDeleteChat={props.onDeleteChat}
       />
 
       <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="shrink-0 border-b border-[#232330] bg-[#101017]/88 px-6 py-5 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="rounded-xl border border-[#2B2B39] bg-[#16161F] p-2 text-[#A0A0B0] transition-colors hover:text-white"

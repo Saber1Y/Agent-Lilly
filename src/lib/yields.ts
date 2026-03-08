@@ -1,4 +1,5 @@
 import { fetchAaveYields } from "./aaveDirect";
+import { fetchSolanaYields } from "./kamino";
 
 export interface YieldData {
   chainId: number;
@@ -22,18 +23,34 @@ export interface YieldRecommendation {
 }
 
 export async function fetchYields(): Promise<ChainYieldMap> {
-  const yields = await fetchAaveYields();
+  const [evmYields, solanaYields] = await Promise.all([
+    fetchAaveYields(),
+    fetchSolanaYields(),
+  ]);
 
-  return yields.reduce<ChainYieldMap>((accumulator, item) => {
-    accumulator[item.chainId] = {
+  const chainYieldMap: ChainYieldMap = {};
+
+  for (const item of evmYields) {
+    chainYieldMap[item.chainId] = {
       chainId: item.chainId,
       chainName: item.chainName,
       symbol: "USDC",
       supplyApr: item.supplyRate,
       liquidity: item.liquidity,
     };
-    return accumulator;
-  }, {});
+  }
+
+  for (const item of solanaYields) {
+    chainYieldMap[item.chainId] = {
+      chainId: item.chainId,
+      chainName: item.chainName,
+      symbol: "USDC",
+      supplyApr: item.supplyApr,
+      liquidity: item.liquidity,
+    };
+  }
+
+  return chainYieldMap;
 }
 
 export function findBestYield(

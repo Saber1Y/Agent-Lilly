@@ -7,6 +7,8 @@ import {
 
 export const DEFAULT_FROM_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 
+export const SOLANA_CHAIN_ID = 1151111081099710;
+
 export const USDC_ADDRESSES: Record<number, string> = {
   1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
   10: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
@@ -14,6 +16,7 @@ export const USDC_ADDRESSES: Record<number, string> = {
   42161: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
   8453: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   43114: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+  [SOLANA_CHAIN_ID]: "USDC",
 };
 
 interface LifiChain {
@@ -167,6 +170,7 @@ const CHAIN_NAMES_FALLBACK: Record<number, string> = {
   42161: "Arbitrum",
   8453: "Base",
   43114: "Avalanche",
+  [SOLANA_CHAIN_ID]: "Solana",
 };
 
 export async function getChainName(chainId: number): Promise<string> {
