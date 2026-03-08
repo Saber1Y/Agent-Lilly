@@ -9,21 +9,24 @@ interface WalletAddressSyncProps {
 }
 
 export function WalletAddressSync({ onChange }: WalletAddressSyncProps) {
-  const { primaryWallet } = useDynamicContext();
+  const { primaryWallet, network } = useDynamicContext();
 
   useEffect(() => {
-    const chainId = primaryWallet?.chain
-      ? typeof primaryWallet.chain === 'number'
-        ? primaryWallet.chain
-        : Number(primaryWallet.chain)
-      : undefined;
+    let chainId: number | undefined;
+    
+    if (network) {
+      chainId = typeof network === 'number' ? network : Number(network);
+    }
+    
+    console.log('Dynamic network:', network);
+    console.log('Primary wallet:', primaryWallet?.address);
     
     onChange({
       address: primaryWallet?.address,
       wallet: primaryWallet,
       chainId,
     });
-  }, [onChange, primaryWallet]);
+  }, [onChange, primaryWallet, network]);
 
   return null;
 }
