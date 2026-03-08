@@ -16,13 +16,38 @@ This AI agent:
 3. Uses LI.FI SDK to get cross-chain bridge quotes
 4. Recommends (and can execute) rebalancing to maximize yield
 
+
+### Cross-Chain Yield Agent
+- Fetches real-time yields from **6 EVM chains** via Aave V3
+- Fetches **Solana** yields via Kamino API
+- Compares yields and recommends optimal rebalancing
+
+### Chat Interface
+- Conversational AI interface at `/dashboard/chat`
+- Commands: `/yields`, `/rebalance`, `/bridge`, `/chains`, `/balance`
+- Connect wallet via Dynamic
+- Balance check before execution
+
+### Execution
+- LI.FI SDK integration for bridge quotes
+- Pre-execution balance validation
+- Support for EVM → EVM and EVM → Solana bridges
+
+### Dashboard
+- Real-time yield opportunity display
+- Run history and metrics
+- Telegram notifications (optional)
+
 ## Tech Stack
 
-- **Next.js 16** - React framework
-- **LI.FI SDK** - Cross-chain swaps and bridging
-- **Aave + on-chain reads** - Real-time yield data
+- **Next.js 16** - React framework with App Router
+- **LI.FI SDK** - Cross-chain swaps and bridging (EVM + Solana)
+- **Aave V3** - Real-time yield data via direct RPC calls
+- **Kamino** - Solana yield data
+- **Dynamic** - Wallet connection
 - **Viem** - Ethereum interaction
-- **Tailwind CSS** - Styling
+- **Supabase** - Persistence (config, runs history)
+- **Gemini** - AI reasoning for yield strategy
 
 ## Quick Start
 
@@ -36,190 +61,91 @@ bun run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the agent.
 
-## Agent Lily CLI
+## Demo
 
-The repo includes a non-wallet operator CLI for read, reporting, and admin tasks.
+### 1. Dashboard
+View yield opportunities and metrics at `/dashboard`
 
-### Install / run locally
+### 2. Chat
+Ask Lily about yields or execute bridges:
 
-```bash
-npm run cli -- help
+```
+check yields
+rebalance 100
+bridge 10 usdc from arbitrum to polygon
+check balance on base
 ```
 
-By default, the CLI uses:
-
-- base URL: `http://127.0.0.1:3000`
-- config file: `~/.lily/config.json`
-
-### Authenticate from the dashboard
-
-The intended flow is:
-
-1. Open `/dashboard/policies`
-2. Enter your admin token
-3. Click `Generate CLI Token`
-4. Copy the generated command:
-
+### 3. API
 ```bash
-lily auth token <TOKEN>
+# Get current yields
+curl -X GET http://localhost:3000/api/agent/yields \
+  -H "Authorization: Bearer <AGENT_API_SECRET>"
+
+# Trigger rebalance analysis
+curl -X POST http://localhost:3000/api/agent/rebalance \
+  -H "Authorization: Bearer <AGENT_API_SECRET>"
 ```
 
-This stores a dedicated Lily CLI token locally. It is separate from the raw admin secret.
+## Supported Chains
 
-### Auth commands
+### EVM (via Aave V3)
+| Chain | Chain ID | USDC Address |
+|-------|----------|--------------|
+| Ethereum | 1 | 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 |
+| Arbitrum | 42161 | 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8 |
+| Optimism | 10 | 0x7F5c764cBc14f9669B88837ca1490cCa17c31607 |
+| Polygon | 137 | 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 |
+| Base | 8453 | 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 |
+| Avalanche | 43114 | 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E |
 
-```bash
-npm run cli -- auth status
-npm run cli -- auth token <TOKEN>
-npm run cli -- auth logout
+### Solana (via Kamino)
+| Chain | Chain ID | Token |
+|-------|----------|-------|
+| Solana | 1151111081099710 | USDC |
+
+
+
+## LI.FI Integration (Required by Hackathon)
+
+This project uses LI.FI in production code:
+
+### 1. LI.FI SDK ✅ (Primary)
+```typescript
+import { getQuote, createConfig, executeRoute } from '@lifi/sdk';
 ```
 
-### Common commands
+### 2. LI.FI MCP Server ✅
+Configured in `mcp.json` for AI assistants.
 
+### 3. LI.FI Agent Skills ✅
 ```bash
-npm run cli -- status
-npm run cli -- yields
-npm run cli -- report
-npm run cli -- runs --limit 5
-npm run cli -- config get
-npm run cli -- run
-```
-
-### Config updates
-
-```bash
-npm run cli -- config set \
-  --current-chain-id 42161 \
-  --position-usdc 250 \
-  --min-net-gain-usd 15 \
-  --max-route-cost-usd 8 \
-  --telegram-enabled true
-```
-
-### Use with a deployed app
-
-If you want the CLI to target a deployed Lily instance, save the token with the deployed base URL:
-
-```bash
-npm run cli -- auth token <TOKEN> --base-url https://your-app.vercel.app
-```
-
-You can still override at runtime with env vars:
-
-```bash
-LILY_BASE_URL=https://your-app.vercel.app \
-LILY_AGENT_TOKEN=<TOKEN> \
-npm run cli -- status
+npx skills add https://github.com/lifinance/lifi-agent-skills --skill li-fi-sdk
 ```
 
 ## Project Structure
 
 ```
 src/
+├── app/
+│   ├── dashboard/
+│   │   ├── page.tsx      # Dashboard overview
+│   │   ├── chat/         # Chat interface
+│   │   ├── policies/     # Agent config
+│   │   └── reports/     # Run history
+│   ├── api/
+│   │   └── agent/       # Agent API endpoints
+│   └── page.tsx         # Landing page
+├── components/           # React components
 ├── lib/
-│   ├── agent.ts      # Main agent logic
-│   ├── yields.ts     # Yield aggregation
-│   └── lifi.ts       # LI.FI SDK integration
-└── app/
-    └── page.tsx      # Demo UI
+│   ├── agent.ts        # Main yield agent logic
+│   ├── yields.ts       # Yield aggregation
+│   ├── lifi.ts        # LI.FI SDK integration
+│   ├── kamino.ts      # Solana yield (Kamino)
+│   ├── aaveDirect.ts  # Aave V3 RPC reads
+│   └── execution.ts   # Bridge execution
+└── constants/          # Chain configs
 ```
-
-## How It Works
-
-### 1. Dynamic Chain Discovery (LI.FI SDK)
-```typescript
-// Dynamically fetches all supported chains from LI.FI
-const chains = await fetchSupportedChains();
-// Returns: [{ id: 1, name: 'Ethereum' }, { id: 42161, name: 'Arbitrum' }, ...]
-```
-
-### 2. Yield Fetching
-```typescript
-// Fetches live USDC yields
-const yields = await fetchYields();
-// Returns: { 42161: { chainName: 'Arbitrum', supplyApr: 4.2%, ... } }
-```
-
-### 3. Decision Making
-```typescript
-// Finds best yield opportunity
-const decision = findBestYield(yields, currentChainId);
-// Returns: { shouldRebalance: true, fromChain: 42161, toChain: 8453, ... }
-```
-
-### 4. Cross-Chain Bridge
-```typescript
-// Gets LI.FI quote for bridging
-const quote = await getBridgeQuote({
-  fromChainId: 42161,  // Arbitrum
-  toChainId: 8453,    // Base
-  fromAmount: '1000000', // 1 USDC
-  fromAddress: '0x...',
-});
-```
-
-## Supported Chains
-
-| Chain | Chain ID | Typical USDC Yield |
-|-------|----------|-------------------|
-| Arbitrum | 42161 | ~4.0% |
-| Base | 8453 | ~4.5% |
-| Optimism | 10 | ~4.0% |
-| Ethereum | 1 | ~3.5% |
-| Polygon | 137 | ~3.8% |
-
-## LI.FI Integration Methods (Required by Hackathon)
-
-This project uses LI.FI in production code and includes optional LI.FI tooling for the development workflow:
-
-### 1. LI.FI SDK ✅ (Primary)
-Used in `src/lib/lifi.ts` for cross-chain bridging:
-```typescript
-import { getQuote, createConfig, executeRoute } from '@lifi/sdk';
-```
-
-### 2. LI.FI MCP Server ✅
-Configured for AI coding assistants in `mcp.json`:
-```json
-{
-  "mcpServers": {
-    "lifi": {
-      "type": "http",
-      "url": "https://mcp.li.quest/mcp"
-    }
-  }
-}
-```
-
-To use: Add this config to your AI assistant's MCP settings.
-
-### 3. LI.FI Agent Skills ✅
-Can be installed into Claude, Cursor, Codex, or other AI assistants:
-```bash
-npx skills add https://github.com/lifinance/lifi-agent-skills --skill li-fi-sdk
-```
-
-This gives the AI assistant knowledge about LI.FI SDK functions.
-
-### 4. OpenClaw Plugin
-Not used in this build.
-
-## Demo Flow
-
-1. **Select Chain** - Choose your current chain (e.g., Arbitrum)
-2. **Run Analysis** - Click button to fetch yields
-3. **View Decision** - See yield comparison and recommendation
-4. **Bridge** - Use LI.FI to execute the cross-chain transfer
-
-## Testing with Real Funds
-
-LI.FI doesn't support testnets (bridges have no liquidity). For testing:
-
-1. Use **small amounts** (~$1-5)
-2. Use **low-gas chains** (Arbitrum, Base, Optimism)
-3. Or just demo the **quote/decision flow** without executing
-
-
 
 ## License
 
