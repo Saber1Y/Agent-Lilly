@@ -3,6 +3,7 @@ import {
   getChains,
   getQuote,
   ChainType,
+  config,
 } from "@lifi/sdk";
 
 export const DEFAULT_FROM_ADDRESS = "0x000000000000000000000000000000000000dEaD";
@@ -44,11 +45,13 @@ export interface BridgeQuote {
 let isConfigured = false;
 let cachedChains: LifiChain[] | null = null;
 
-function ensureConfig() {
+async function ensureConfig() {
   if (!isConfigured) {
     createConfig({
       integrator: "lifi-yield-agent",
     });
+    const chains = await getChains({ chainTypes: [ChainType.EVM, ChainType.SVM] });
+    config.setChains(chains);
     isConfigured = true;
   }
 }
@@ -58,7 +61,7 @@ export async function fetchSupportedChains(): Promise<LifiChain[]> {
     return cachedChains;
   }
 
-  ensureConfig();
+  await ensureConfig();
   const chains = await getChains();
   cachedChains = chains.map((chain) => ({
     id: chain.id,
@@ -89,7 +92,7 @@ export async function getBridgeQuote(params: {
   fromAmount: string;
   fromAddress?: string;
 }): Promise<BridgeQuote> {
-  ensureConfig();
+  await ensureConfig();
 
   const fromToken = USDC_ADDRESSES[params.fromChainId];
   const toToken = USDC_ADDRESSES[params.toChainId];

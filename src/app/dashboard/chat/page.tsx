@@ -123,6 +123,19 @@ function DashboardChatContent() {
     }
   }, []);
 
+  const handleWalletChange = useCallback((params: { address?: string; wallet: unknown }) => {
+    const { address, wallet } = params as { address?: string; wallet: { address: string; connector: unknown } | null };
+    setWalletAddress(address);
+    if (!wallet) {
+      setWallet(null);
+      return;
+    }
+    setWallet({
+      address: wallet.address,
+      connector: wallet.connector,
+    });
+  }, []);
+
   const handleDeleteChat = useCallback((chatId: string) => {
     deleteChat(chatId);
     setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
@@ -180,17 +193,18 @@ function DashboardChatContent() {
       timestamp: createTimestamp(),
       actionCommand,
     };
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+
+    const allMessages: Message[] = [...messages, userMessage, assistantMessage];
+    setMessages(allMessages);
     setIsLoading(false);
     setLoadingLabel("Thinking...");
 
-    const updatedMessages: Message[] = [...messages, userMessage, assistantMessage];
     const firstUserMsg = messages.find((m) => m.role === "user")?.content || "";
     const title = activeChatId
       ? chats.find((c) => c.id === activeChatId)?.title || "New Chat"
       : generateChatTitle(firstUserMsg || displayValue);
     const chatId = activeChatId || crypto.randomUUID();
-    saveChat({ id: chatId, title, messages: updatedMessages, timestamp: Date.now() });
+    saveChat({ id: chatId, title, messages: allMessages, timestamp: Date.now() });
     setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
     setActiveChatId(chatId);
   };
@@ -210,18 +224,7 @@ function DashboardChatContent() {
     >
       {dynamicEnvironmentId ? (
         <WalletAddressSync
-          onChange={({ address, wallet: nextWallet }) => {
-            setWalletAddress(address);
-            if (!nextWallet) {
-              setWallet(null);
-              return;
-            }
-
-            setWallet({
-              address: nextWallet.address,
-              connector: nextWallet.connector,
-            });
-          }}
+          onChange={handleWalletChange}
         />
       ) : null}
 
