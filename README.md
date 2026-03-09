@@ -1,151 +1,192 @@
 # Agent Lily
 
-Agent Lily is a cross-chain yield strategist that monitors USDC lending yields across chains and uses LI.FI to route capital toward better opportunities.
+<p align="center">
+  <img src="./public/lily.png" alt="Agent Lily" width="220" />
+</p>
 
-## The Problem
+<p align="center">
+  Cross-chain yield agent for USDC allocation, routing, automation, and user-scoped operator workflows.
+</p>
 
-- Different DeFi chains offer different yields on the same asset (USDC)
-- Ethereum might offer 3.5%, while Base offers 4.5%
-- Manually tracking and moving funds is tedious
+<p align="center">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
+  <img alt="LI.FI" src="https://img.shields.io/badge/LI.FI-SDK-121212" />
+  <img alt="Aave" src="https://img.shields.io/badge/Aave-V3-B6509E" />
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Storage-3ECF8E?logo=supabase&logoColor=white" />
+  <img alt="Dynamic" src="https://img.shields.io/badge/Dynamic-Wallets-5B5BD6" />
+  <img alt="Gemini" src="https://img.shields.io/badge/Gemini-Reasoning-4285F4?logo=google" />
+</p>
 
-## The Solution
+## Overview
 
-This AI agent:
-1. Fetches live USDC supply APR across supported chains
-2. Compares yields and finds the best opportunity
-3. Uses LI.FI SDK to get cross-chain bridge quotes
-4. Recommends (and can execute) rebalancing to maximize yield
+Agent Lily monitors lending yield opportunities across chains, compares routes, explains decisions, and helps users rebalance USDC into stronger yield positions.
 
+The app combines:
 
-### Cross-Chain Yield Agent
-- Fetches real-time yields from **6 EVM chains** via Aave V3
-- Fetches **Solana** yields via Kamino API
-- Compares yields and recommends optimal rebalancing
+- A public landing page
+- A wallet-gated dashboard
+- Chat-driven yield analysis and route execution
+- Policy controls for automation behavior
+- Telegram delivery for run notifications
+- Wallet-scoped persistence for config, runs, reports, and chats
 
-### Chat Interface
-- Conversational AI interface at `/dashboard/chat`
-- Commands: `/yields`, `/rebalance`, `/bridge`, `/chains`, `/balance`
-- Connect wallet via Dynamic
-- Balance check before execution
+## What Lily Does
 
-### Execution
-- LI.FI SDK integration for bridge quotes
-- Pre-execution balance validation
-- Support for EVM → EVM and EVM → Solana bridges
+1. Fetches live USDC yield data from supported markets
+2. Compares current position yield against better destinations
+3. Prices a bridge route through LI.FI
+4. Estimates route cost, projected net gain, and payback window
+5. Stores results per connected wallet
+6. Surfaces dry-runs, reports, chat history, and optional Telegram alerts
+
+## Core Features
 
 ### Dashboard
-- Real-time yield opportunity display
-- Run history and metrics
-- Telegram notifications (optional)
+
+- Wallet-gated user workspace
+- Overview, approvals, reports, chat, policies, and Telegram setup
+- User-scoped data tied to the connected wallet address
+
+### Chat Workspace
+
+- Commands for yields, chains, routes, and rebalance analysis
+- Wallet-aware route previews
+- Bridge and rebalance execution flows from the connected wallet
+
+### Automation
+
+- Dry-run recommendations
+- Optional autonomous execution
+- Cooldown, route-cost, net-gain, and chain policy controls
+
+### Persistence
+
+- Supabase-backed config storage
+- Run history and reporting
+- Wallet-scoped chat history
+- Encrypted Telegram credentials at rest
+
+### Telegram
+
+- Outbound Lily notifications for `dry_run`, `executed`, and `error` events
+- Manual and cron-triggered automation updates
 
 ## Tech Stack
 
-- **Next.js 16** - React framework with App Router
-- **LI.FI SDK** - Cross-chain swaps and bridging (EVM + Solana)
-- **Aave V3** - Real-time yield data via direct RPC calls
-- **Kamino** - Solana yield data
-- **Dynamic** - Wallet connection
-- **Viem** - Ethereum interaction
-- **Supabase** - Persistence (config, runs history)
-- **Gemini** - AI reasoning for yield strategy
+- Next.js 16
+- React 19
+- LI.FI SDK
+- Aave V3
+- Kamino
+- Dynamic
+- Viem
+- Supabase
+- Gemini
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 bun install
-
-# Run development server
+cp .env.example .env.local
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the agent.
+Open `http://localhost:3000`.
 
-## Demo
+## Environment
 
-### 1. Dashboard
-View yield opportunities and metrics at `/dashboard`
+Use `.env.local` for local development.
 
-### 2. Chat
-Ask Lily about yields or execute bridges:
+Public browser-safe values:
 
-```
+- `NEXT_PUBLIC_DYNAMIC_ENV_ID`
+- `NEXT_PUBLIC_LIFI_API_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+
+Server-only values:
+
+- `AGENT_API_SECRET`
+- `CRON_SECRET`
+- `AGENT_CONFIG_CIPHER_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `AGENT_PRIVATE_KEY`
+- `GEMINI_API_KEY`
+
+An example template is included in [.env.example](./.env.example).
+
+## Demo Commands
+
+In chat:
+
+```text
 check yields
 rebalance 100
 bridge 10 usdc from arbitrum to polygon
 check balance on base
 ```
 
-### 3. API
-```bash
-# Get current yields
-curl -X GET http://localhost:3000/api/agent/yields \
-  -H "Authorization: Bearer <AGENT_API_SECRET>"
+API examples:
 
-# Trigger rebalance analysis
+```bash
+curl -X GET http://localhost:3000/api/agent/yields
+
 curl -X POST http://localhost:3000/api/agent/rebalance \
-  -H "Authorization: Bearer <AGENT_API_SECRET>"
+  -H "x-wallet-address: 0xYourWalletAddress"
 ```
 
 ## Supported Chains
 
-### EVM (via Aave V3)
+### EVM
+
 | Chain | Chain ID | USDC Address |
 |-------|----------|--------------|
-| Ethereum | 1 | 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 |
-| Arbitrum | 42161 | 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8 |
-| Optimism | 10 | 0x7F5c764cBc14f9669B88837ca1490cCa17c31607 |
-| Polygon | 137 | 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 |
-| Base | 8453 | 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 |
-| Avalanche | 43114 | 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E |
+| Ethereum | 1 | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
+| Arbitrum | 42161 | `0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8` |
+| Optimism | 10 | `0x7F5c764cBc14f9669B88837ca1490cCa17c31607` |
+| Polygon | 137 | `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174` |
+| Base | 8453 | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Avalanche | 43114 | `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E` |
 
-### Solana (via Kamino)
+### Solana
+
 | Chain | Chain ID | Token |
 |-------|----------|-------|
-| Solana | 1151111081099710 | USDC |
-
-
-
-## LI.FI Integration (Required by Hackathon)
-
-This project uses LI.FI in production code:
-
-### 1. LI.FI SDK ✅ (Primary)
-```typescript
-import { getQuote, createConfig, executeRoute } from '@lifi/sdk';
-```
-
-### 2. LI.FI MCP Server ✅
-Configured in `mcp.json` for AI assistants.
-
-### 3. LI.FI Agent Skills ✅
-```bash
-npx skills add https://github.com/lifinance/lifi-agent-skills --skill li-fi-sdk
-```
+| Solana | `1151111081099710` | `USDC` |
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/
 │   ├── dashboard/
-│   │   ├── page.tsx      # Dashboard overview
-│   │   ├── chat/         # Chat interface
-│   │   ├── policies/     # Agent config
-│   │   └── reports/     # Run history
 │   ├── api/
-│   │   └── agent/       # Agent API endpoints
-│   └── page.tsx         # Landing page
-├── components/           # React components
+│   └── page.tsx
+├── components/
+├── env/
 ├── lib/
-│   ├── agent.ts        # Main yield agent logic
-│   ├── yields.ts       # Yield aggregation
-│   ├── lifi.ts        # LI.FI SDK integration
-│   ├── kamino.ts      # Solana yield (Kamino)
-│   ├── aaveDirect.ts  # Aave V3 RPC reads
-│   └── execution.ts   # Bridge execution
-└── constants/          # Chain configs
+└── constants/
 ```
+
+Key files:
+
+- `src/lib/agent.ts` - decision engine
+- `src/lib/automation.ts` - autonomous rebalance flow
+- `src/lib/lifi.ts` - LI.FI route and chain helpers
+- `src/lib/yields.ts` - yield aggregation
+- `src/lib/persistence.ts` - wallet-scoped storage
+- `src/lib/telegram.ts` - Telegram notifications
+
+## LI.FI Integration
+
+Production integration uses the LI.FI SDK directly.
+
+```ts
+import { getQuote, createConfig, executeRoute } from "@lifi/sdk";
+```
+
+The repo also includes LI.FI MCP configuration in `mcp.json`.
 
 ## License
 

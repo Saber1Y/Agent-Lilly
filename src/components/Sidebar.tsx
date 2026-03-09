@@ -8,6 +8,8 @@ import {
   HiOutlineChatAlt2,
   HiOutlineClipboardList,
   HiOutlineDocumentReport,
+  HiOutlineShieldCheck,
+  HiOutlinePaperAirplane,
 } from 'react-icons/hi';
 
 export interface ChatHistory {
@@ -124,6 +126,28 @@ export function Sidebar({
             >
               <HiOutlineChatAlt2 className="h-5 w-5" />
               Chat
+            </Link>
+            <Link
+              href="/dashboard/policies"
+              className={`mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                currentPage === 'policies'
+                  ? 'bg-[#1A1A24] text-white'
+                  : 'text-[#A0A0B0] hover:bg-[#1A1A24] hover:text-white'
+              }`}
+            >
+              <HiOutlineShieldCheck className="h-5 w-5" />
+              Policies
+            </Link>
+            <Link
+              href="/dashboard/telegram"
+              className={`mt-1 flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                currentPage === 'telegram'
+                  ? 'bg-[#1A1A24] text-white'
+                  : 'text-[#A0A0B0] hover:bg-[#1A1A24] hover:text-white'
+              }`}
+            >
+              <HiOutlinePaperAirplane className="h-5 w-5" />
+              Telegram
             </Link>
           </div>
 

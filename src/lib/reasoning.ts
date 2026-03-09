@@ -4,6 +4,7 @@ import {
   HarmCategory,
   type SafetySetting,
 } from "@google/genai";
+import { serverEnv } from "@/env/server";
 
 import type { AgentDecision } from "./agent";
 
@@ -23,8 +24,8 @@ export interface StrategyReasoning {
 function getGeminiApiKeys() {
   const keys: string[] = [];
 
-  if (process.env.GEMINI_API_KEY) {
-    keys.push(process.env.GEMINI_API_KEY);
+  if (serverEnv.geminiApiKey) {
+    keys.push(serverEnv.geminiApiKey);
   }
 
   for (let index = 1; index <= 10; index += 1) {
@@ -112,7 +113,7 @@ class GeminiReasoningService {
 
   private getSafetySettings() {
     const threshold =
-      resolveSafetyThreshold(process.env.GEMINI_SAFETY_THRESHOLD) ||
+      resolveSafetyThreshold(serverEnv.geminiSafetyThreshold) ||
       HarmBlockThreshold.BLOCK_ONLY_HIGH;
     return [
       { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold },
@@ -187,7 +188,7 @@ class GeminiReasoningService {
     }
 
     const operation = async () => {
-      const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+      const model = serverEnv.geminiModel || DEFAULT_MODEL;
       const result = await this.client!.models.generateContent({
         model,
         contents: [

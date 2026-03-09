@@ -1,5 +1,6 @@
 "use client";
 
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -24,16 +25,31 @@ export interface DashboardReport {
 }
 
 export function useDashboardFeed() {
+  const { primaryWallet } = useDynamicContext();
   const [runs, setRuns] = useState<DashboardRun[]>([]);
   const [report, setReport] = useState<DashboardReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const refresh = useCallback(async () => {
+    if (!primaryWallet?.address) {
+      setRuns([]);
+      setReport(null);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const [runsRes, reportRes] = await Promise.all([
-        fetch("/api/dashboard/runs"),
-        fetch("/api/dashboard/report"),
+        fetch("/api/dashboard/runs", {
+          headers: {
+            "x-wallet-address": primaryWallet.address,
+          },
+        }),
+        fetch("/api/dashboard/report", {
+          headers: {
+            "x-wallet-address": primaryWallet.address,
+          },
+        }),
       ]);
 
       if (!runsRes.ok || !reportRes.ok) {
@@ -53,7 +69,7 @@ export function useDashboardFeed() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [primaryWallet?.address]);
 
   useEffect(() => {
     void refresh();

@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "./supabaseAdmin";
 
 export interface StoredAgentConfig {
   id: string;
+  walletAddress: string;
   currentChainId: number;
   positionUsdc: string;
   autoRebalanceEnabled: boolean;
@@ -22,6 +23,7 @@ export interface StoredAgentConfig {
 
 export interface StoredAutomationRun {
   id: string;
+  walletAddress: string;
   createdAt: string;
   triggerSource: string;
   status: string;
@@ -35,8 +37,26 @@ export interface StoredAutomationRun {
   reasoning?: Record<string, unknown> | null;
 }
 
+export interface StoredChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+  actionCommand?: string;
+}
+
+export interface StoredChat {
+  id: string;
+  walletAddress: string;
+  title: string;
+  messages: StoredChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AgentConfigRow {
   id: string;
+  wallet_address: string;
   current_chain_id: number;
   position_usdc: string;
   auto_rebalance_enabled: boolean;
@@ -55,6 +75,7 @@ interface AgentConfigRow {
 
 interface AgentRunRow {
   id: string;
+  wallet_address: string;
   created_at: string;
   trigger_source: string;
   status: string;
@@ -68,7 +89,18 @@ interface AgentRunRow {
   reasoning?: Record<string, unknown> | null;
 }
 
-export async function getStoredAgentConfig(): Promise<StoredAgentConfig | null> {
+interface AgentChatRow {
+  id: string;
+  wallet_address: string;
+  title: string;
+  messages: StoredChatMessage[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getStoredAgentConfig(
+  walletAddress: string,
+): Promise<StoredAgentConfig | null> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
     return null;
@@ -77,9 +109,9 @@ export async function getStoredAgentConfig(): Promise<StoredAgentConfig | null> 
   const { data, error } = await supabase
     .from("agent_configs")
     .select(
-      "id, current_chain_id, position_usdc, auto_rebalance_enabled, min_yield_delta_pct, min_net_gain_usd, max_route_cost_usd, cooldown_minutes, allowed_destination_chain_ids, blocked_chain_ids, alert_webhook_url, telegram_bot_token, telegram_chat_id, telegram_enabled, updated_at",
+      "id, wallet_address, current_chain_id, position_usdc, auto_rebalance_enabled, min_yield_delta_pct, min_net_gain_usd, max_route_cost_usd, cooldown_minutes, allowed_destination_chain_ids, blocked_chain_ids, alert_webhook_url, telegram_bot_token, telegram_chat_id, telegram_enabled, updated_at",
     )
-    .eq("id", "default")
+    .eq("wallet_address", walletAddress)
     .maybeSingle<AgentConfigRow>();
 
   if (error) {
@@ -111,6 +143,7 @@ export async function saveAgentConfig(
   try {
     row = {
       id: config.id,
+      wallet_address: config.walletAddress,
       current_chain_id: config.currentChainId,
       position_usdc: config.positionUsdc,
       auto_rebalance_enabled: config.autoRebalanceEnabled,
@@ -132,9 +165,9 @@ export async function saveAgentConfig(
 
   const { data, error } = await supabase
     .from("agent_configs")
-    .upsert(row, { onConflict: "id" })
+    .upsert(row, { onConflict: "wallet_address" })
     .select(
-      "id, current_chain_id, position_usdc, auto_rebalance_enabled, min_yield_delta_pct, min_net_gain_usd, max_route_cost_usd, cooldown_minutes, allowed_destination_chain_ids, blocked_chain_ids, alert_webhook_url, telegram_bot_token, telegram_chat_id, telegram_enabled, updated_at",
+      "id, wallet_address, current_chain_id, position_usdc, auto_rebalance_enabled, min_yield_delta_pct, min_net_gain_usd, max_route_cost_usd, cooldown_minutes, allowed_destination_chain_ids, blocked_chain_ids, alert_webhook_url, telegram_bot_token, telegram_chat_id, telegram_enabled, updated_at",
     )
     .single<AgentConfigRow>();
 
@@ -152,6 +185,7 @@ export async function saveAgentConfig(
 }
 
 export async function persistAutomationRun(params: {
+  walletAddress: string;
   triggerSource: "manual" | "cron";
   result: AutomationResult;
 }) {
@@ -161,6 +195,7 @@ export async function persistAutomationRun(params: {
   }
 
   const { error } = await supabase.from("agent_runs").insert({
+    wallet_address: params.walletAddress,
     trigger_source: params.triggerSource,
     status: params.result.status,
     mode: params.result.mode,
@@ -180,6 +215,7 @@ export async function persistAutomationRun(params: {
 }
 
 export async function getRecentAutomationRuns(
+  walletAddress: string,
   limit = 10,
 ): Promise<StoredAutomationRun[]> {
   const supabase = getSupabaseAdminClient();
@@ -190,8 +226,9 @@ export async function getRecentAutomationRuns(
   const { data, error } = await supabase
     .from("agent_runs")
     .select(
-      "id, created_at, trigger_source, status, mode, current_chain_id, amount_usdc, message, route_id, tx_links, details, reasoning",
+      "id, wallet_address, created_at, trigger_source, status, mode, current_chain_id, amount_usdc, message, route_id, tx_links, details, reasoning",
     )
+    .eq("wallet_address", walletAddress)
     .order("created_at", { ascending: false })
     .limit(limit)
     .returns<AgentRunRow[]>();
@@ -204,17 +241,91 @@ export async function getRecentAutomationRuns(
   return (data || []).map(mapRunRow);
 }
 
-export async function getLastExecutionTimestamp(): Promise<string | null> {
-  const runs = await getRecentAutomationRuns(20);
+export async function getLastExecutionTimestamp(walletAddress: string): Promise<string | null> {
+  const runs = await getRecentAutomationRuns(walletAddress, 20);
   const recentExecution = runs.find(
     (run) => run.status === "executed" || run.mode === "execution",
   );
   return recentExecution?.createdAt ?? null;
 }
 
+export async function getStoredChats(walletAddress: string): Promise<StoredChat[]> {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("agent_chats")
+    .select("id, wallet_address, title, messages, created_at, updated_at")
+    .eq("wallet_address", walletAddress)
+    .order("updated_at", { ascending: false })
+    .returns<AgentChatRow[]>();
+
+  if (error) {
+    console.error("Failed to load chats", error);
+    return [];
+  }
+
+  return (data || []).map(mapChatRow);
+}
+
+export async function saveStoredChat(params: {
+  walletAddress: string;
+  id: string;
+  title: string;
+  messages: StoredChatMessage[];
+}) {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    return null;
+  }
+
+  const row = {
+    id: params.id,
+    wallet_address: params.walletAddress,
+    title: params.title,
+    messages: params.messages,
+  };
+
+  const { data, error } = await supabase
+    .from("agent_chats")
+    .upsert(row, { onConflict: "wallet_address,id" })
+    .select("id, wallet_address, title, messages, created_at, updated_at")
+    .single<AgentChatRow>();
+
+  if (error) {
+    console.error("Failed to save chat", error);
+    return null;
+  }
+
+  return mapChatRow(data);
+}
+
+export async function deleteStoredChat(walletAddress: string, chatId: string) {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("agent_chats")
+    .delete()
+    .eq("wallet_address", walletAddress)
+    .eq("id", chatId);
+
+  if (error) {
+    console.error("Failed to delete chat", error);
+    return false;
+  }
+
+  return true;
+}
+
 function mapAgentConfigRow(row: AgentConfigRow): StoredAgentConfig {
   return {
     id: row.id,
+    walletAddress: row.wallet_address,
     currentChainId: row.current_chain_id,
     positionUsdc: row.position_usdc,
     autoRebalanceEnabled: row.auto_rebalance_enabled,
@@ -235,6 +346,7 @@ function mapAgentConfigRow(row: AgentConfigRow): StoredAgentConfig {
 function mapRunRow(row: AgentRunRow): StoredAutomationRun {
   return {
     id: row.id,
+    walletAddress: row.wallet_address,
     createdAt: row.created_at,
     triggerSource: row.trigger_source,
     status: row.status,
@@ -246,5 +358,16 @@ function mapRunRow(row: AgentRunRow): StoredAutomationRun {
     txLinks: row.tx_links ?? [],
     details: row.details ?? {},
     reasoning: row.reasoning ?? null,
+  };
+}
+
+function mapChatRow(row: AgentChatRow): StoredChat {
+  return {
+    id: row.id,
+    walletAddress: row.wallet_address,
+    title: row.title,
+    messages: row.messages ?? [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }

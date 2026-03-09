@@ -1,13 +1,13 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { DashboardShell } from "@/components/DashboardShell";
 import { ActionButton, StatusPill } from "@/components/dashboard/ui";
 import { WalletAddressSync } from "@/components/WalletAddressSync";
+import { clientEnv } from "@/env/client";
 import { getChatResponse } from "@/lib/chat";
 import {
   deleteChat,
@@ -22,20 +22,7 @@ import {
   type ExecutableWallet,
 } from "@/lib/execution";
 
-const ConnectWallet = dynamic(
-  () =>
-    import("@/components/ConnectWallet").then((m) => ({
-      default: m.ConnectWallet,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-28 h-9 rounded-full bg-[#1A1A24] animate-pulse" />
-    ),
-  },
-);
-
-interface Message extends ChatMessage {}
+type Message = ChatMessage;
 
 interface ChatHistory {
   id: string;
@@ -93,7 +80,7 @@ function DashboardChatContent() {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const dynamicEnvironmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID;
+  const dynamicEnvironmentId = clientEnv.dynamicEnvironmentId;
   const prefilledCommand = searchParams.get("command") ?? "";
   const currentInput = input || prefilledCommand;
   const isSlashMode = currentInput.trimStart().startsWith("/");
@@ -103,8 +90,40 @@ function DashboardChatContent() {
   const canExecute = canExecuteWithWallet(wallet);
 
   useEffect(() => {
-    setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
-  }, []);
+    if (!walletAddress) {
+      return;
+    }
+
+    let cancelled = false;
+    void getStoredChats(walletAddress)
+      .then((storedChats) => {
+        if (cancelled) {
+          return;
+        }
+
+        setChats(
+          storedChats.map((chat) => ({
+            id: chat.id,
+            title: chat.title,
+            timestamp: chat.timestamp,
+          })),
+        );
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
+        toast.error("Failed to load chats.", {
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [walletAddress]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -116,19 +135,27 @@ function DashboardChatContent() {
   }, []);
 
   const handleSelectChat = useCallback((chatId: string) => {
-    const stored = getStoredChats();
-    const chat = stored.find((c) => c.id === chatId);
-    if (chat) {
-      setMessages(chat.messages);
-      setActiveChatId(chatId);
+    if (!walletAddress) {
+      return;
     }
-  }, []);
+
+    void getStoredChats(walletAddress).then((stored) => {
+      const chat = stored.find((c) => c.id === chatId);
+      if (chat) {
+        setMessages(chat.messages);
+        setActiveChatId(chatId);
+      }
+    });
+  }, [walletAddress]);
 
   const handleWalletChange = useCallback((params: { address?: string; wallet: unknown; chainId?: number }) => {
     const { address, wallet, chainId } = params as { address?: string; wallet: { address: string; connector: unknown } | null; chainId?: number };
     setWalletAddress(address);
     setWalletChainId(chainId);
     if (!wallet) {
+      setChats([]);
+      setMessages(INITIAL_MESSAGES);
+      setActiveChatId(null);
       setWallet(null);
       return;
     }
@@ -139,13 +166,26 @@ function DashboardChatContent() {
   }, []);
 
   const handleDeleteChat = useCallback((chatId: string) => {
-    deleteChat(chatId);
-    setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
+    if (!walletAddress) {
+      return;
+    }
+
+    void deleteChat(walletAddress, chatId)
+      .then(async () => {
+        const storedChats = await getStoredChats(walletAddress);
+        setChats(storedChats.map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
+      })
+      .catch((error) => {
+        toast.error("Failed to delete chat.", {
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred.",
+        });
+      });
     if (activeChatId === chatId) {
       setMessages(INITIAL_MESSAGES);
       setActiveChatId(null);
     }
-  }, [activeChatId]);
+  }, [activeChatId, walletAddress]);
 
   const sendCommand = async (commandValue: string, displayValue: string) => {
     if (!commandValue.trim() || isLoading) {
@@ -206,8 +246,29 @@ function DashboardChatContent() {
       ? chats.find((c) => c.id === activeChatId)?.title || "New Chat"
       : generateChatTitle(firstUserMsg || displayValue);
     const chatId = activeChatId || crypto.randomUUID();
-    saveChat({ id: chatId, title, messages: allMessages, timestamp: Date.now() });
-    setChats(getStoredChats().map((c) => ({ id: c.id, title: c.title, timestamp: c.timestamp })));
+    if (walletAddress) {
+      try {
+        await saveChat(walletAddress, {
+          id: chatId,
+          title,
+          messages: allMessages,
+          timestamp: assistantMessage.timestamp,
+        });
+        const storedChats = await getStoredChats(walletAddress);
+        setChats(
+          storedChats.map((chat) => ({
+            id: chat.id,
+            title: chat.title,
+            timestamp: chat.timestamp,
+          })),
+        );
+      } catch (error) {
+        toast.error("Failed to save chat.", {
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred.",
+        });
+      }
+    }
     setActiveChatId(chatId);
   };
 
@@ -216,7 +277,6 @@ function DashboardChatContent() {
       currentPage="chat"
       title="Agent Lily Chat"
       subtitle="Conversational workspace for quotes, analysis, and execution."
-      actions={<ConnectWallet />}
       chats={chats}
       activeChat={activeChatId}
       onNewChat={handleNewChat}

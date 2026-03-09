@@ -8,7 +8,6 @@ import {
 } from "@lifi/sdk";
 import { createWalletClient, http, type Client } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-
 import { YieldAgent, type AgentDecision } from "./agent";
 import { getChainConfig } from "./evmChains";
 import {
@@ -28,6 +27,7 @@ import {
   formatAutomationTelegramMessage,
   sendTelegramMessage,
 } from "./telegram";
+import { serverEnv } from "@/env/server";
 
 type AutomationStatus =
   | "skipped"
@@ -57,18 +57,23 @@ export interface AutomationResult {
 
 export async function runAutonomousRebalance(
   triggerSource: "manual" | "cron" = "manual",
+  options: { walletAddress?: string } = {},
 ): Promise<AutomationResult> {
-  const storedConfig = await getStoredAgentConfig();
+  const privateKey = serverEnv.agentPrivateKey;
+  const signerAddress = privateKey
+    ? privateKeyToAccount(privateKey as `0x${string}`).address
+    : DEFAULT_FROM_ADDRESS;
+  const walletAddress = options.walletAddress ?? signerAddress;
+  const storedConfig = await getStoredAgentConfig(walletAddress);
   const currentChainId =
     storedConfig?.currentChainId ??
-    parseIntegerEnv("AGENT_CURRENT_CHAIN_ID", 42161);
+    parseIntegerEnv(serverEnv.agentCurrentChainId, 42161);
   const amountUsdc =
-    storedConfig?.positionUsdc || process.env.AGENT_POSITION_USDC || "100";
+    storedConfig?.positionUsdc || serverEnv.agentPositionUsdc || "100";
   const amountBaseUnits = toUsdcBaseUnits(amountUsdc);
-  const privateKey = process.env.AGENT_PRIVATE_KEY;
   const autoExecute =
     storedConfig?.autoRebalanceEnabled ??
-    (process.env.AUTO_REBALANCE_ENABLED === "true");
+    (serverEnv.autoRebalanceEnabled === "true");
   const policy = {
     minYieldDeltaPct: storedConfig?.minYieldDeltaPct ?? null,
     minNetGainUsd: storedConfig?.minNetGainUsd ?? null,
@@ -76,17 +81,15 @@ export async function runAutonomousRebalance(
     allowedDestinationChainIds: storedConfig?.allowedDestinationChainIds ?? null,
     blockedChainIds: storedConfig?.blockedChainIds ?? null,
   };
-  const signerAddress = privateKey
-    ? privateKeyToAccount(privateKey as `0x${string}`).address
-    : DEFAULT_FROM_ADDRESS;
   const agent = new YieldAgent(signerAddress, currentChainId);
   const cooldownResult = await maybeSkipForCooldown(
+    walletAddress,
     storedConfig?.cooldownMinutes,
     currentChainId,
     amountUsdc,
   );
   if (cooldownResult) {
-    await persistAutomationRun({ triggerSource, result: cooldownResult });
+    await persistAutomationRun({ walletAddress, triggerSource, result: cooldownResult });
     await maybeSendAlert(storedConfig?.alertWebhookUrl, triggerSource, cooldownResult);
     return cooldownResult;
   }
@@ -103,7 +106,7 @@ export async function runAutonomousRebalance(
       message: decision.message,
       reasoning: await reasoningPromise,
     };
-    await persistAutomationRun({ triggerSource, result });
+    await persistAutomationRun({ walletAddress, triggerSource, result });
     await maybeSendAlert(storedConfig?.alertWebhookUrl, triggerSource, result);
     await maybeSendTelegramAlert(storedConfig, triggerSource, result);
     return result;
@@ -119,7 +122,7 @@ export async function runAutonomousRebalance(
       message: decision.message,
       reasoning: await reasoningPromise,
     };
-    await persistAutomationRun({ triggerSource, result });
+    await persistAutomationRun({ walletAddress, triggerSource, result });
     await maybeSendAlert(storedConfig?.alertWebhookUrl, triggerSource, result);
     await maybeSendTelegramAlert(storedConfig, triggerSource, result);
     return result;
@@ -150,7 +153,7 @@ export async function runAutonomousRebalance(
         reviewCommand,
       },
     };
-    await persistAutomationRun({ triggerSource, result });
+    await persistAutomationRun({ walletAddress, triggerSource, result });
     await maybeSendAlert(storedConfig?.alertWebhookUrl, triggerSource, result);
     await maybeSendTelegramAlert(storedConfig, triggerSource, result);
     return result;
@@ -188,7 +191,7 @@ export async function runAutonomousRebalance(
       paybackDays: decision.analysis?.paybackDays,
     },
   };
-  await persistAutomationRun({ triggerSource, result });
+  await persistAutomationRun({ walletAddress, triggerSource, result });
   await maybeSendAlert(storedConfig?.alertWebhookUrl, triggerSource, result);
   await maybeSendTelegramAlert(storedConfig, triggerSource, result);
   return result;
@@ -271,8 +274,7 @@ function createServerWalletClient(
   });
 }
 
-function parseIntegerEnv(name: string, fallbackValue: number): number {
-  const value = process.env[name];
+function parseIntegerEnv(value: string, fallbackValue: number): number {
   if (!value) {
     return fallbackValue;
   }
@@ -290,7 +292,7 @@ async function getReasoningSafe(decision: AgentDecision) {
 
     return {
       ...reasoning,
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      model: serverEnv.geminiModel || "gemini-2.5-flash",
     };
   } catch (error) {
     console.error("Gemini reasoning failed", error);
@@ -299,6 +301,7 @@ async function getReasoningSafe(decision: AgentDecision) {
 }
 
 async function maybeSkipForCooldown(
+  walletAddress: string,
   cooldownMinutes: number | null | undefined,
   currentChainId: number,
   amountUsdc: string,
@@ -307,7 +310,7 @@ async function maybeSkipForCooldown(
     return null;
   }
 
-  const lastExecutionTimestamp = await getLastExecutionTimestamp();
+  const lastExecutionTimestamp = await getLastExecutionTimestamp(walletAddress);
   if (!lastExecutionTimestamp) {
     return null;
   }
@@ -405,8 +408,8 @@ async function maybeSendTelegramAlert(
   }
 }
 
-export async function getAutomationReport() {
-  const runs = await getRecentAutomationRuns(20);
+export async function getAutomationReport(walletAddress: string) {
+  const runs = await getRecentAutomationRuns(walletAddress, 20);
   const executed = runs.filter((run) => run.status === "executed").length;
   const dryRuns = runs.filter((run) => run.status === "dry_run").length;
   const skipped = runs.filter((run) => run.status === "skipped").length;

@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  getAgentApiSecret,
-  isAuthorizedAgentRequest,
-} from "@/lib/agentApiAuth";
-import {
   getStoredAgentConfig,
   saveAgentConfig,
 } from "@/lib/persistence";
+import { getWalletAddressFromRequest } from "@/lib/walletScope";
 
 const agentConfigSchema = z.object({
   currentChainId: z.number().int().positive().optional(),
@@ -26,26 +23,16 @@ const agentConfigSchema = z.object({
   telegramEnabled: z.boolean().nullable().optional(),
 });
 
-function unauthorizedResponse() {
-  const secret = getAgentApiSecret();
-
-  return NextResponse.json(
-    {
-      status: "error",
-      message: secret
-        ? "Unauthorized agent request."
-        : "AGENT_API_SECRET or CRON_SECRET is not configured.",
-    },
-    { status: secret ? 401 : 503 },
-  );
-}
-
 export async function GET(request: NextRequest) {
-  if (!isAuthorizedAgentRequest(request)) {
-    return unauthorizedResponse();
+  const walletAddress = getWalletAddressFromRequest(request);
+  if (!walletAddress) {
+    return NextResponse.json(
+      { status: "error", message: "A valid wallet address is required." },
+      { status: 400 },
+    );
   }
 
-  const config = await getStoredAgentConfig();
+  const config = await getStoredAgentConfig(walletAddress);
   return NextResponse.json({
     status: "ok",
     config,
@@ -53,8 +40,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedAgentRequest(request)) {
-    return unauthorizedResponse();
+  const walletAddress = getWalletAddressFromRequest(request);
+  if (!walletAddress) {
+    return NextResponse.json(
+      { status: "error", message: "A valid wallet address is required." },
+      { status: 400 },
+    );
   }
 
   const rawPayload = await request.json();
@@ -75,9 +66,10 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = parsedPayload.data;
-  const existingConfig = await getStoredAgentConfig();
+  const existingConfig = await getStoredAgentConfig(walletAddress);
   const savedConfig = await saveAgentConfig({
-    id: "default",
+    id: walletAddress,
+    walletAddress,
     currentChainId: payload.currentChainId ?? existingConfig?.currentChainId ?? 42161,
     positionUsdc: payload.positionUsdc ?? existingConfig?.positionUsdc ?? "100",
     autoRebalanceEnabled:

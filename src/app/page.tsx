@@ -283,15 +283,15 @@ export default function Home() {
               },
               {
                 title: "/dashboard/policies",
-                label: "Policies + CLI",
+                label: "Policies",
                 copy:
-                  "Admin workspace for chain filters, route-cost rules, cooldowns, auto-execution settings, and CLI token generation.",
+                  "Configure chain filters, route-cost rules, cooldowns, and auto-execution behavior from the user dashboard.",
               },
               {
                 title: "/dashboard/telegram",
                 label: "Telegram",
                 copy:
-                  "Admin workspace for deploying Lily as an outbound Telegram bot with encrypted bot credentials.",
+                  "Connect Telegram delivery so Lily can send automation alerts and updates to your chat.",
               },
             ].map((item) => (
               <Card key={item.title} hover>

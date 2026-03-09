@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { serverEnv } from "@/env/server";
 import { runAutonomousRebalance } from "@/lib/automation";
+import { getWalletAddressFromRequest } from "@/lib/walletScope";
 
 function isAuthorized(request: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
+  const cronSecret = serverEnv.cronSecret;
   if (!cronSecret) {
     return false;
   }
@@ -17,16 +19,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         status: "error",
-        message: process.env.CRON_SECRET
+        message: serverEnv.cronSecret
           ? "Unauthorized cron request."
           : "CRON_SECRET is not configured.",
       },
-      { status: process.env.CRON_SECRET ? 401 : 503 },
+      { status: serverEnv.cronSecret ? 401 : 503 },
     );
   }
 
   try {
-    const result = await runAutonomousRebalance("cron");
+    const walletAddress = getWalletAddressFromRequest(request);
+    const result = await runAutonomousRebalance("cron", { walletAddress: walletAddress ?? undefined });
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(

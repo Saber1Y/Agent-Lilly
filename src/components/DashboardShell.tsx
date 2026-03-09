@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { HiOutlineMenu } from "react-icons/hi";
 
+import { ConnectWallet } from "./ConnectWallet";
+import { DashboardWalletGate } from "./DashboardWalletGate";
 import { Sidebar, type ChatHistory } from "./Sidebar";
 
 export function DashboardShell(props: {
@@ -66,13 +68,20 @@ export function DashboardShell(props: {
               </div>
             </div>
             {props.actions ? (
-              <div className="flex items-center gap-3">{props.actions}</div>
-            ) : null}
+              <div className="flex items-center gap-3">
+                <ConnectWallet />
+                {props.actions}
+              </div>
+            ) : (
+              <ConnectWallet />
+            )}
           </div>
         </header>
 
         <main className="flex-1 min-h-0 overflow-y-auto">
-          <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">{props.children}</div>
+          <DashboardWalletGate>
+            <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">{props.children}</div>
+          </DashboardWalletGate>
         </main>
       </div>
     </div>
