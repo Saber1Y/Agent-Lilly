@@ -12,22 +12,13 @@ import {
 import { useAgentOps } from "@/components/dashboard/useAgentOps";
 
 export default function DashboardPoliciesPage() {
-  const { opsSecret, setOpsSecret, opsConfig, setOpsConfig, saveConfig, isLoading } =
-    useAgentOps();
+  const { opsConfig, setOpsConfig, saveConfig, isLoading } = useAgentOps();
   const [cliToken, setCliToken] = useState<string | null>(null);
   const [cliTokenExpiry, setCliTokenExpiry] = useState<string | null>(null);
 
   async function generateCliToken() {
-    if (!opsSecret.trim()) {
-      toast.error("Enter agent admin token first.");
-      return;
-    }
-
     const response = await fetch("/api/agent/cli-token", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${opsSecret}`,
-      },
     });
     const json = await response.json();
 
@@ -55,8 +46,8 @@ export default function DashboardPoliciesPage() {
   return (
     <DashboardShell
       currentPage="policies"
-      title="Risk Policies"
-      subtitle="Make Lily optimize net return and stay inside your chain, cost, and cooldown rules."
+      title="Policies"
+      subtitle="Tune Lily's guardrails so automation stays inside your preferred chains, costs, and timing."
       actions={
         <ActionButton onClick={saveConfig} disabled={isLoading}>
           Save Policies
@@ -64,17 +55,10 @@ export default function DashboardPoliciesPage() {
       }
     >
       <SectionCard
-        title="Risk Policy Controls"
-        subtitle="This is the operator-grade layer that makes Lily feel deliberate rather than APY-maxi."
+        title="Automation Rules"
+        subtitle="Control when Lily should hold, rebalance, or wait for a better route."
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <TextField
-            label="Agent Admin Token"
-            type="password"
-            value={opsSecret}
-            onChange={setOpsSecret}
-            placeholder="AGENT_API_SECRET or CRON_SECRET"
-          />
           <TextField
             label="Current Chain ID"
             value={String(opsConfig.currentChainId)}
@@ -159,7 +143,7 @@ export default function DashboardPoliciesPage() {
       <div className="mt-6">
         <SectionCard
           title="CLI Access"
-          subtitle="Generate a dedicated Lily CLI token. This is separate from the raw admin secret."
+          subtitle="Generate a Lily CLI token for local operator commands and reports."
           aside={
             <ActionButton onClick={generateCliToken} disabled={isLoading}>
               Generate CLI Token
@@ -168,7 +152,7 @@ export default function DashboardPoliciesPage() {
         >
           <div className="space-y-4">
             <p className="text-sm leading-6 text-[#8F90A6]">
-              Install Lily CLI, then run the copied command to save the token locally.
+              Generate a token here if you want to operate Lily from the CLI as well as the dashboard.
             </p>
             <TextField
               label="CLI Auth Command"

@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
+import { serverEnv } from "@/env/server";
 import { isValidCliToken } from "./cliAuth";
 
 export function getAgentApiSecret() {
-  return process.env.AGENT_API_SECRET || process.env.CRON_SECRET || null;
+  return serverEnv.agentApiSecret || null;
 }
 
 export function getBearerToken(request: NextRequest) {

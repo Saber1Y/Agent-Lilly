@@ -1,9 +1,10 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
+import { serverEnv } from "@/env/server";
 
 const ENCRYPTED_PREFIX = "enc:";
 
 function getCipherKey() {
-  const secret = process.env.AGENT_CONFIG_CIPHER_KEY;
+  const secret = serverEnv.agentConfigCipherKey;
   if (!secret) {
     return null;
   }

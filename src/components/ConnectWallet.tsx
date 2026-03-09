@@ -1,9 +1,10 @@
 'use client';
 
+import { clientEnv } from '@/env/client';
 import { ConnectWalletEnabled } from './ConnectWalletEnabled';
 
 export function ConnectWallet() {
-  const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID;
+  const environmentId = clientEnv.dynamicEnvironmentId;
 
   if (!environmentId) {
     return (

@@ -6,48 +6,76 @@ export interface ChatMessage {
   actionCommand?: string;
 }
 
-interface Chat {
+export interface Chat {
   id: string;
   title: string;
   messages: ChatMessage[];
   timestamp: number;
 }
 
-const STORAGE_KEY = "lily-chat-history";
+function createWalletHeaders(walletAddress: string) {
+  return {
+    "x-wallet-address": walletAddress,
+  };
+}
 
-export function getStoredChats(): Chat[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
+export async function getStoredChats(walletAddress: string): Promise<Chat[]> {
+  const response = await fetch("/api/dashboard/chats", {
+    headers: createWalletHeaders(walletAddress),
+  });
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.message || "Failed to load chats.");
+  }
+
+  return (json.chats ?? []).map(
+    (chat: {
+      id: string;
+      title: string;
+      messages: ChatMessage[];
+      updatedAt: string;
+    }) => ({
+      id: chat.id,
+      title: chat.title,
+      messages: chat.messages ?? [],
+      timestamp: new Date(chat.updatedAt).getTime(),
+    }),
+  );
+}
+
+export async function saveChat(walletAddress: string, chat: Chat): Promise<void> {
+  const response = await fetch("/api/dashboard/chats", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...createWalletHeaders(walletAddress),
+    },
+    body: JSON.stringify({
+      id: chat.id,
+      title: chat.title,
+      messages: chat.messages,
+    }),
+  });
+
+  if (!response.ok) {
+    const json = await response.json();
+    throw new Error(json.message || "Failed to save chat.");
   }
 }
 
-export function saveChat(chat: Chat): void {
-  if (typeof window === "undefined") return;
-  try {
-    const chats = getStoredChats();
-    const existingIndex = chats.findIndex((c) => c.id === chat.id);
-    if (existingIndex >= 0) {
-      chats[existingIndex] = chat;
-    } else {
-      chats.unshift(chat);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats.slice(0, 50)));
-  } catch {
-    console.error("Failed to save chat");
-  }
-}
+export async function deleteChat(walletAddress: string, chatId: string): Promise<void> {
+  const response = await fetch(
+    `/api/dashboard/chats?chat_id=${encodeURIComponent(chatId)}`,
+    {
+      method: "DELETE",
+      headers: createWalletHeaders(walletAddress),
+    },
+  );
 
-export function deleteChat(chatId: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const chats = getStoredChats().filter((c) => c.id !== chatId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
-  } catch {
-    console.error("Failed to delete chat");
+  if (!response.ok) {
+    const json = await response.json();
+    throw new Error(json.message || "Failed to delete chat.");
   }
 }
 

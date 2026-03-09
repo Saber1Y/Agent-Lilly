@@ -4,9 +4,10 @@ import { DynamicContextProvider } from '@dynamic-labs/sdk-react-core';
 import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
 import { SolanaWalletConnectors } from '@dynamic-labs/solana';
 import { ReactNode } from 'react';
+import { clientEnv } from '@/env/client';
 
 export function Providers({ children }: { children: ReactNode }) {
-  const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENV_ID || '';
+  const environmentId = clientEnv.dynamicEnvironmentId;
 
   if (!environmentId) {
     return <>{children}</>;

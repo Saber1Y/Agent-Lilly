@@ -1,28 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  getAgentApiSecret,
-  isAuthorizedAgentRequest,
-} from "@/lib/agentApiAuth";
 import { getRecentAutomationRuns } from "@/lib/persistence";
+import { getWalletAddressFromRequest } from "@/lib/walletScope";
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorizedAgentRequest(request)) {
+  const walletAddress = getWalletAddressFromRequest(request);
+  if (!walletAddress) {
     return NextResponse.json(
-      {
-        status: "error",
-        message: getAgentApiSecret()
-          ? "Unauthorized agent request."
-          : "AGENT_API_SECRET or CRON_SECRET is not configured.",
-      },
-      { status: getAgentApiSecret() ? 401 : 503 },
+      { status: "error", message: "A valid wallet address is required." },
+      { status: 400 },
     );
   }
 
-  const runs = await getRecentAutomationRuns(20);
+  const runs = await getRecentAutomationRuns(walletAddress, 20);
   return NextResponse.json({
     status: "ok",
     runs,
   });
 }
-

@@ -10,8 +10,6 @@ import { useAgentOps } from "@/components/dashboard/useAgentOps";
 
 export default function DashboardTelegramPage() {
   const {
-    opsSecret,
-    setOpsSecret,
     opsConfig,
     setOpsConfig,
     saveConfig,
@@ -21,8 +19,8 @@ export default function DashboardTelegramPage() {
   return (
     <DashboardShell
       currentPage="telegram"
-      title="Deploy Lily to Telegram"
-      subtitle="Connect a bot token and chat id so Lily can send live operator alerts from the same backend."
+      title="Telegram"
+      subtitle="Connect Telegram so Lily can send live automation alerts and updates to your chosen chat."
       actions={
         <ActionButton onClick={saveConfig} disabled={isLoading}>
           Save Telegram Setup
@@ -30,22 +28,13 @@ export default function DashboardTelegramPage() {
       }
     >
       <SectionCard
-        title="Telegram Deployment"
-        subtitle="Give Lily a bot identity so she can operate where the user already lives."
+        title="Telegram Delivery"
+        subtitle="Set the bot credentials and destination chat used for Lily notifications."
       >
         <p className="mb-4 rounded-2xl border border-[#2B2B39] bg-[#101018] px-4 py-3 text-sm text-[#A0A0B0]">
-          Admin-only setup. Telegram credentials are encrypted on the server before they are persisted.
+          Telegram credentials are stored on the server and used for outbound Lily notifications.
         </p>
         <div className="grid gap-4 md:grid-cols-2">
-          <TextField
-            label="Agent Admin Token"
-            type="password"
-            value={opsSecret}
-            onChange={setOpsSecret}
-            placeholder="AGENT_API_SECRET or CRON_SECRET"
-          />
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <TextField
             label="Telegram Bot Token"
             type="password"
@@ -73,7 +62,7 @@ export default function DashboardTelegramPage() {
           Enable Telegram alerts
         </label>
         <p className="mt-4 text-sm text-[#A0A0B0]">
-          This deploys Lily as an outbound operator bot first. The same saved bot identity can later be extended with inbound webhook commands.
+          Once enabled, Lily can push route reviews, run results, and automation updates directly to Telegram.
         </p>
       </SectionCard>
     </DashboardShell>

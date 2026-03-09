@@ -1,5 +1,6 @@
 "use client";
 
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -54,74 +55,72 @@ const defaultConfig: AgentOpsConfig = {
   telegramEnabled: false,
 };
 
+function getAuthorizedHeaders(walletAddress?: string) {
+  if (!walletAddress) {
+    throw new Error("Connect a wallet to load dashboard data.");
+  }
+
+  return {
+    "x-wallet-address": walletAddress,
+  };
+}
+
 export function useAgentOps() {
-  const [opsSecret, setOpsSecret] = useState("");
+  const { primaryWallet } = useDynamicContext();
   const [opsConfig, setOpsConfig] = useState<AgentOpsConfig>(defaultConfig);
   const [runs, setRuns] = useState<AgentRun[]>([]);
   const [report, setReport] = useState<AgentReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refresh = useCallback(
-    async (secret = opsSecret) => {
-      if (!secret.trim()) {
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const headers = {
-          Authorization: `Bearer ${secret}`,
-        };
-
-        const [configRes, runsRes, reportRes] = await Promise.all([
-          fetch("/api/agent/config", { headers }),
-          fetch("/api/agent/runs", { headers }),
-          fetch("/api/agent/report", { headers }),
-        ]);
-
-        if (!configRes.ok || !runsRes.ok || !reportRes.ok) {
-          throw new Error("Agent admin token is invalid or APIs are unavailable.");
-        }
-
-        const configJson = await configRes.json();
-        const runsJson = await runsRes.json();
-        const reportJson = await reportRes.json();
-
-        setOpsConfig({
-          ...defaultConfig,
-          ...(configJson.config || {}),
-          alertWebhookUrl: configJson.config?.alertWebhookUrl ?? "",
-          telegramBotToken: configJson.config?.telegramBotToken ?? "",
-          telegramChatId: configJson.config?.telegramChatId ?? "",
-        });
-        setRuns(runsJson.runs ?? []);
-        setReport(reportJson.report ?? null);
-      } catch (error) {
-        toast.error("Failed to load dashboard.", {
-          description:
-            error instanceof Error ? error.message : "Unknown error occurred.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [opsSecret],
-  );
-
-  useEffect(() => {
-    if (!opsSecret) {
+  const refresh = useCallback(async () => {
+    if (!primaryWallet?.address) {
+      setRuns([]);
+      setReport(null);
       return;
     }
 
-    void refresh(opsSecret);
-  }, [opsSecret, refresh]);
+    setIsLoading(true);
+    try {
+      const headers = getAuthorizedHeaders(primaryWallet?.address);
+
+      const [configRes, runsRes, reportRes] = await Promise.all([
+        fetch("/api/agent/config", { headers }),
+        fetch("/api/agent/runs", { headers }),
+        fetch("/api/agent/report", { headers }),
+      ]);
+
+      if (!configRes.ok || !runsRes.ok || !reportRes.ok) {
+        throw new Error("Wallet-scoped dashboard data is unavailable.");
+      }
+
+      const configJson = await configRes.json();
+      const runsJson = await runsRes.json();
+      const reportJson = await reportRes.json();
+
+      setOpsConfig({
+        ...defaultConfig,
+        ...(configJson.config || {}),
+        alertWebhookUrl: configJson.config?.alertWebhookUrl ?? "",
+        telegramBotToken: configJson.config?.telegramBotToken ?? "",
+        telegramChatId: configJson.config?.telegramChatId ?? "",
+      });
+      setRuns(runsJson.runs ?? []);
+      setReport(reportJson.report ?? null);
+    } catch (error) {
+      toast.error("Failed to load dashboard.", {
+        description:
+          error instanceof Error ? error.message : "Unknown error occurred.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [primaryWallet?.address]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const saveConfig = async () => {
-    if (!opsSecret.trim()) {
-      toast.error("Enter agent admin token first.");
-      return false;
-    }
-
     setIsLoading(true);
     try {
       const payload = {
@@ -135,7 +134,7 @@ export function useAgentOps() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${opsSecret}`,
+          ...getAuthorizedHeaders(primaryWallet?.address),
         },
         body: JSON.stringify(payload),
       });
@@ -145,7 +144,7 @@ export function useAgentOps() {
       }
 
       toast.success("Dashboard settings saved.");
-      await refresh(opsSecret);
+      await refresh();
       return true;
     } catch (error) {
       toast.error("Failed to save settings.", {
@@ -159,18 +158,11 @@ export function useAgentOps() {
   };
 
   const runLilyNow = async () => {
-    if (!opsSecret.trim()) {
-      toast.error("Enter agent admin token first.");
-      return false;
-    }
-
     setIsLoading(true);
     try {
       const response = await fetch("/api/agent/rebalance", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${opsSecret}`,
-        },
+        headers: getAuthorizedHeaders(primaryWallet?.address),
       });
       const json = await response.json();
       if (!response.ok) {
@@ -178,7 +170,7 @@ export function useAgentOps() {
       }
 
       toast.success("Agent Lily run completed.");
-      await refresh(opsSecret);
+      await refresh();
       return true;
     } catch (error) {
       toast.error("Run failed.", {
@@ -192,8 +184,6 @@ export function useAgentOps() {
   };
 
   return {
-    opsSecret,
-    setOpsSecret,
     opsConfig,
     setOpsConfig,
     runs,

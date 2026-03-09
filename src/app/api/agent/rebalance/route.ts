@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  getAgentApiSecret,
-  isAuthorizedAgentRequest,
-} from "@/lib/agentApiAuth";
 import { runAutonomousRebalance } from "@/lib/automation";
+import { getWalletAddressFromRequest } from "@/lib/walletScope";
 
 export async function GET() {
   return NextResponse.json(
@@ -17,22 +14,16 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedAgentRequest(request)) {
+  const walletAddress = getWalletAddressFromRequest(request);
+  if (!walletAddress) {
     return NextResponse.json(
-      {
-        status: "error",
-        message: getAgentApiSecret()
-          ? "Unauthorized agent request."
-          : "AGENT_API_SECRET or CRON_SECRET is not configured.",
-      },
-      {
-        status: getAgentApiSecret() ? 401 : 503,
-      },
+      { status: "error", message: "A valid wallet address is required." },
+      { status: 400 },
     );
   }
 
   try {
-    const result = await runAutonomousRebalance("manual");
+    const result = await runAutonomousRebalance("manual", { walletAddress });
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(

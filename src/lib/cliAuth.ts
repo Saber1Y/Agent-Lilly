@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { getNumberEnv, serverEnv } from "@/env/server";
 
 const CLI_TOKEN_PREFIX = "lily_cli";
 const DEFAULT_TTL_DAYS = 30;
@@ -74,13 +75,11 @@ export function isValidCliToken(token: string | null | undefined) {
 }
 
 function getSigningSecret() {
-  return process.env.AGENT_API_SECRET || process.env.CRON_SECRET || null;
+  return serverEnv.agentApiSecret || null;
 }
 
 function getCliTokenTtlDays() {
-  const rawValue = process.env.CLI_TOKEN_TTL_DAYS;
-  const parsed = Number.parseInt(rawValue || "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TTL_DAYS;
+  return getNumberEnv(serverEnv.cliTokenTtlDays, DEFAULT_TTL_DAYS);
 }
 
 function signPayload(payloadEncoded: string, secret: string) {
